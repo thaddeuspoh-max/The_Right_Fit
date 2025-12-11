@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using The_Right_Fit.Data;
 
@@ -11,9 +12,11 @@ using The_Right_Fit.Data;
 namespace The_Right_Fit.Migrations
 {
     [DbContext(typeof(The_Right_FitContext))]
-    partial class The_Right_FitContextModelSnapshot : ModelSnapshot
+    [Migration("20251211154427_SeedUserRole")]
+    partial class SeedUserRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

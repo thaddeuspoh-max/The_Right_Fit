@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using The_Right_Fit.Data;
 
@@ -11,9 +12,11 @@ using The_Right_Fit.Data;
 namespace The_Right_Fit.Migrations
 {
     [DbContext(typeof(The_Right_FitContext))]
-    partial class The_Right_FitContextModelSnapshot : ModelSnapshot
+    [Migration("20251211152725_AddIdentity")]
+    partial class AddIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,26 +50,6 @@ namespace The_Right_Fit.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "ad2bcf0c-20db-474f-8407-5a6b159518ba",
-                            Name = "Administrator",
-                            NormalizedName = "ADMINISTRATOR"
-                        },
-                        new
-                        {
-                            Id = "bd2bcf0c-20db-474f-8407-5a6b159518bb",
-                            Name = "User",
-                            NormalizedName = "USER"
-                        },
-                        new
-                        {
-                            Id = "cd2bcf0c-20db-474f-8407-5a6b159518cc",
-                            Name = "Trainer",
-                            NormalizedName = "TRAINER"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -154,18 +137,6 @@ namespace The_Right_Fit.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = "3781efa7-66dc-47f0-860f-e506d04102e4",
-                            RoleId = "ad2bcf0c-20db-474f-8407-5a6b159518ba"
-                        },
-                        new
-                        {
-                            UserId = "ee111111-2222-3333-4444-555555555555",
-                            RoleId = "cd2bcf0c-20db-474f-8407-5a6b159518cc"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -205,12 +176,6 @@ namespace The_Right_Fit.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -256,44 +221,6 @@ namespace The_Right_Fit.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "3781efa7-66dc-47f0-860f-e506d04102e4",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "e95e461c-54e0-4ad5-80e7-01f7c54713be",
-                            Email = "admin@therightfit.com",
-                            EmailConfirmed = true,
-                            FirstName = "Admin",
-                            LastName = "User",
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ADMIN@THERIGHTFIT.COM",
-                            NormalizedUserName = "ADMIN@THERIGHTFIT.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDPOFojSrMRCRVBiGs7iWZA0P3/+poSbn3QURq2oB7OSV94qOTmVLaPA3WcXXPeOQA==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "1707b38c-a903-452d-bcd1-1ceb3bec155f",
-                            TwoFactorEnabled = false,
-                            UserName = "admin@therightfit.com"
-                        },
-                        new
-                        {
-                            Id = "ee111111-2222-3333-4444-555555555555",
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "b33f6a48-96a2-43e5-846d-eb7ce3cf936d",
-                            Email = "trainer@therightfit.com",
-                            EmailConfirmed = true,
-                            FirstName = "John",
-                            LastName = "Trainer",
-                            LockoutEnabled = false,
-                            NormalizedEmail = "TRAINER@THERIGHTFIT.COM",
-                            NormalizedUserName = "TRAINER@THERIGHTFIT.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDJA5CGYA4bLEVHouaOgYDZ1WY0VjFCRf9Bmircxnlw/vmld77TTL31muX/M2be61g==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "3a598664-aecd-43c2-a283-0910103b6bd7",
-                            TwoFactorEnabled = false,
-                            UserName = "trainer@therightfit.com"
-                        });
                 });
 
             modelBuilder.Entity("The_Right_Fit.Domain.Booking", b =>
@@ -429,8 +356,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5947),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5962),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2965),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2979),
                             EquipmentNeeded = "Barbell",
                             ExerciseName = "Squat",
                             Instructions = "Stand with feet shoulder-width apart, squat down by bending knees and hips, then stand back up.",
@@ -442,8 +369,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 2,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5965),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5965),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2983),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2983),
                             EquipmentNeeded = "Barbell",
                             ExerciseName = "Bench Press",
                             Instructions = "Lie on a bench, lower the barbell to your chest, and push it back up.",
@@ -455,8 +382,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 3,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5967),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5967),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2985),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2985),
                             EquipmentNeeded = "Barbell",
                             ExerciseName = "Deadlift",
                             Instructions = "Lift the barbell from the ground by extending your hips and knees while maintaining a straight back.",
@@ -468,8 +395,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 4,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5969),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5969),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2987),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2987),
                             EquipmentNeeded = "None",
                             ExerciseName = "Push-Up",
                             Instructions = "Lower your body towards the ground by bending your elbows, then push back up.",
@@ -481,8 +408,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 5,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5971),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5971),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2989),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2989),
                             EquipmentNeeded = "Pull-up Bar",
                             ExerciseName = "Pull-Up",
                             Instructions = "Hang from a bar and pull your chin above the bar, then lower down.",
@@ -494,8 +421,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 6,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5973),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5973),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2991),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2991),
                             EquipmentNeeded = "None",
                             ExerciseName = "Lunges",
                             Instructions = "Step forward and lower your body until both knees are bent at 90 degrees, then return to standing.",
@@ -507,8 +434,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 7,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5975),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5975),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2993),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2994),
                             EquipmentNeeded = "Dumbbells",
                             ExerciseName = "Bicep Curl",
                             Instructions = "Hold dumbbells and curl them upwards by bending your elbows, then lower down slowly.",
@@ -520,8 +447,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 8,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5976),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5977),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2995),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2996),
                             EquipmentNeeded = "None",
                             ExerciseName = "Plank",
                             Instructions = "Hold a push-up position with your forearms on the ground, keeping your body straight.",
@@ -533,8 +460,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 9,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5978),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(5979),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2997),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2998),
                             EquipmentNeeded = "Dumbbells",
                             ExerciseName = "Shoulder Press",
                             Instructions = "Press the dumbbells upward overhead, then lower them back to shoulder height.",
@@ -546,8 +473,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 10,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6056),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6057),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2999),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(2999),
                             EquipmentNeeded = "Lat Pulldown Machine",
                             ExerciseName = "Lat Pulldown",
                             Instructions = "Pull the bar down towards your chest while keeping your torso upright, then return slowly.",
@@ -602,8 +529,8 @@ namespace The_Right_Fit.Migrations
                             Id = 1,
                             Calories = 130,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6241),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6242),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3211),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3211),
                             IsCustom = 0,
                             Name = "White Rice",
                             ServingSizeDescription = "100g",
@@ -614,8 +541,8 @@ namespace The_Right_Fit.Migrations
                             Id = 2,
                             Calories = 165,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6244),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6244),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3213),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3214),
                             IsCustom = 0,
                             Name = "Chicken Breast",
                             ServingSizeDescription = "100g",
@@ -626,8 +553,8 @@ namespace The_Right_Fit.Migrations
                             Id = 3,
                             Calories = 105,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6246),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6246),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3215),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3216),
                             IsCustom = 0,
                             Name = "Banana",
                             ServingSizeDescription = "1 medium (118g)",
@@ -638,8 +565,8 @@ namespace The_Right_Fit.Migrations
                             Id = 4,
                             Calories = 72,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6248),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6248),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3217),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3218),
                             IsCustom = 0,
                             Name = "Egg",
                             ServingSizeDescription = "1 whole egg",
@@ -650,8 +577,8 @@ namespace The_Right_Fit.Migrations
                             Id = 5,
                             Calories = 95,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6250),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6250),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3219),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3219),
                             IsCustom = 0,
                             Name = "Apple",
                             ServingSizeDescription = "1 medium (182g)",
@@ -662,8 +589,8 @@ namespace The_Right_Fit.Migrations
                             Id = 6,
                             Calories = 70,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6252),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6252),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3221),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3221),
                             IsCustom = 0,
                             Name = "Whole Wheat Bread",
                             ServingSizeDescription = "1 slice",
@@ -674,8 +601,8 @@ namespace The_Right_Fit.Migrations
                             Id = 7,
                             Calories = 150,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6253),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6254),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3223),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3223),
                             IsCustom = 0,
                             Name = "Oatmeal",
                             ServingSizeDescription = "40g (1/2 cup dry)",
@@ -686,8 +613,8 @@ namespace The_Right_Fit.Migrations
                             Id = 8,
                             Calories = 103,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6255),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6256),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3224),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3225),
                             IsCustom = 0,
                             Name = "Milk",
                             ServingSizeDescription = "250ml",
@@ -698,8 +625,8 @@ namespace The_Right_Fit.Migrations
                             Id = 9,
                             Calories = 59,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6257),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6258),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3226),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3227),
                             IsCustom = 0,
                             Name = "Greek Yogurt",
                             ServingSizeDescription = "100g",
@@ -710,8 +637,8 @@ namespace The_Right_Fit.Migrations
                             Id = 10,
                             Calories = 208,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6259),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6260),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3228),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3229),
                             IsCustom = 0,
                             Name = "Salmon",
                             ServingSizeDescription = "100g",
@@ -886,8 +813,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 1,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6389),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6390),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3385),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3386),
                             DifficultyLevel = "Beginner",
                             DurationWeeks = 6,
                             GoalType = "General Fitness",
@@ -898,8 +825,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 2,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6392),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6392),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3388),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3388),
                             DifficultyLevel = "Beginner",
                             DurationWeeks = 4,
                             GoalType = "Weight Loss",
@@ -910,8 +837,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 3,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6394),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6395),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3390),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3390),
                             DifficultyLevel = "Intermediate",
                             DurationWeeks = 8,
                             GoalType = "Muscle Gain",
@@ -922,8 +849,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 4,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6396),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6397),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3392),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3392),
                             DifficultyLevel = "Intermediate",
                             DurationWeeks = 6,
                             GoalType = "Strength Training",
@@ -934,8 +861,8 @@ namespace The_Right_Fit.Migrations
                         {
                             Id = 5,
                             CreatedBy = "System",
-                            DateCreated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6398),
-                            DateUpdated = new DateTime(2025, 12, 11, 23, 44, 26, 971, DateTimeKind.Local).AddTicks(6399),
+                            DateCreated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3394),
+                            DateUpdated = new DateTime(2025, 12, 11, 23, 27, 24, 677, DateTimeKind.Local).AddTicks(3394),
                             DifficultyLevel = "Advanced",
                             DurationWeeks = 8,
                             GoalType = "Muscle Gain",

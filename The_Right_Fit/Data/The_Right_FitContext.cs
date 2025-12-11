@@ -1,20 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using The_Right_Fit.Configurations.Entities;
-using The_Right_Fit.Domain;
+using The_Right_Fit.Data;
 
 namespace The_Right_Fit.Data
 {
-    public class The_Right_FitContext : DbContext
+    public class The_Right_FitContext(DbContextOptions<The_Right_FitContext> options) : IdentityDbContext<The_Right_FitUser>(options)
     {
-        public The_Right_FitContext (DbContextOptions<The_Right_FitContext> options)
-            : base(options)
-        {
-        }
-
         public DbSet<The_Right_Fit.Domain.Booking> Booking { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.DietLog> DietLog { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.Exercise> Exercise { get; set; } = default!;
@@ -27,6 +19,14 @@ namespace The_Right_Fit.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+            builder.ApplyConfiguration(new RoleSeed());        // Roles: Admin, User, Trainer
+            builder.ApplyConfiguration(new UserSeed());        // Admin + Trainer users
+            builder.ApplyConfiguration(new UserRoleSeed());    // Assign roles to users
+
+            // =============================
+            // APP ENTITY SEEDS
+            // =============================
+
             builder.ApplyConfiguration(new ExerciseSeed());
             builder.ApplyConfiguration(new FoodItemsSeed());
             builder.ApplyConfiguration(new WorkoutPlanSeed());
