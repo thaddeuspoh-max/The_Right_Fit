@@ -1,0 +1,84 @@
+﻿@page "/workoutlogs/create"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>WorkoutLog</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="WorkoutLog" OnValidSubmit="AddWorkoutLog" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="userid" class="form-label">UserId:</label> 
+                <InputNumber id="userid" @bind-Value="WorkoutLog.UserId" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.UserId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="workoutplanid" class="form-label">WorkoutPlanId:</label> 
+                <InputNumber id="workoutplanid" @bind-Value="WorkoutLog.WorkoutPlanId" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.WorkoutPlanId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="workoutdatetime" class="form-label">WorkoutDateTime:</label> 
+                <InputDate id="workoutdatetime" @bind-Value="WorkoutLog.WorkoutDateTime" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.WorkoutDateTime" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="durationminutes" class="form-label">DurationMinutes:</label> 
+                <InputNumber id="durationminutes" @bind-Value="WorkoutLog.DurationMinutes" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.DurationMinutes" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="notes" class="form-label">Notes:</label> 
+                <InputText id="notes" @bind-Value="WorkoutLog.Notes" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.Notes" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="datecreated" class="form-label">DateCreated:</label> 
+                <InputDate id="datecreated" @bind-Value="WorkoutLog.DateCreated" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.DateCreated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="dateupdated" class="form-label">DateUpdated:</label> 
+                <InputDate id="dateupdated" @bind-Value="WorkoutLog.DateUpdated" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.DateUpdated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="createdby" class="form-label">CreatedBy:</label> 
+                <InputText id="createdby" @bind-Value="WorkoutLog.CreatedBy" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.CreatedBy" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="updatedby" class="form-label">UpdatedBy:</label> 
+                <InputText id="updatedby" @bind-Value="WorkoutLog.UpdatedBy" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLog.UpdatedBy" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/workoutlogs">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private WorkoutLog WorkoutLog { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddWorkoutLog()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.WorkoutLog.Add(WorkoutLog);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/workoutlogs");
+    }
+}

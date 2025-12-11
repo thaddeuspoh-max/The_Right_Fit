@@ -1,0 +1,87 @@
+﻿@page "/fooditems/delete"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>FoodItems</h2>
+    <hr />
+    @if (fooditems is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@fooditems.Name</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">ServingSizeDescription</dt>
+            <dd class="col-sm-10">@fooditems.ServingSizeDescription</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Calories</dt>
+            <dd class="col-sm-10">@fooditems.Calories</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">IsCustom</dt>
+            <dd class="col-sm-10">@fooditems.IsCustom</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CreatedByUserId</dt>
+            <dd class="col-sm-10">@fooditems.CreatedByUserId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@fooditems.DateCreated</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@fooditems.DateUpdated</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@fooditems.CreatedBy</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">UpdatedBy</dt>
+            <dd class="col-sm-10">@fooditems.UpdatedBy</dd>
+        </dl>
+        <EditForm method="post" Model="fooditems" OnValidSubmit="DeleteFoodItems" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(fooditems is null)">Delete</button> |
+            <a href="/fooditems">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private FoodItems? fooditems;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        fooditems = await context.FoodItems.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (fooditems is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteFoodItems()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.FoodItems.Remove(fooditems!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/fooditems");
+    }
+}

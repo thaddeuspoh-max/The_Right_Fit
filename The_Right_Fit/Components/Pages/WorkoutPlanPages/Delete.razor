@@ -1,0 +1,91 @@
+﻿@page "/workoutplans/delete"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>WorkoutPlan</h2>
+    <hr />
+    @if (workoutplan is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">UserId</dt>
+            <dd class="col-sm-10">@workoutplan.UserId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">TrainerId</dt>
+            <dd class="col-sm-10">@workoutplan.TrainerId</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">PlanName</dt>
+            <dd class="col-sm-10">@workoutplan.PlanName</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">GoalType</dt>
+            <dd class="col-sm-10">@workoutplan.GoalType</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DifficultyLevel</dt>
+            <dd class="col-sm-10">@workoutplan.DifficultyLevel</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DurationWeeks</dt>
+            <dd class="col-sm-10">@workoutplan.DurationWeeks</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@workoutplan.DateCreated</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@workoutplan.DateUpdated</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@workoutplan.CreatedBy</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">UpdatedBy</dt>
+            <dd class="col-sm-10">@workoutplan.UpdatedBy</dd>
+        </dl>
+        <EditForm method="post" Model="workoutplan" OnValidSubmit="DeleteWorkoutPlan" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(workoutplan is null)">Delete</button> |
+            <a href="/workoutplans">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private WorkoutPlan? workoutplan;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        workoutplan = await context.WorkoutPlan.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (workoutplan is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteWorkoutPlan()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.WorkoutPlan.Remove(workoutplan!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/workoutplans");
+    }
+}

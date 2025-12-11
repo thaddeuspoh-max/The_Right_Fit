@@ -1,0 +1,66 @@
+﻿@page "/dietlogs/details"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>DietLog</h2>
+    <hr />
+    @if (dietlog is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">UserId</dt>
+            <dd class="col-sm-10">@dietlog.UserId</dd>
+            <dt class="col-sm-2">FoodItemId</dt>
+            <dd class="col-sm-10">@dietlog.FoodItemId</dd>
+            <dt class="col-sm-2">LogDate</dt>
+            <dd class="col-sm-10">@dietlog.LogDate</dd>
+            <dt class="col-sm-2">MealType</dt>
+            <dd class="col-sm-10">@dietlog.MealType</dd>
+            <dt class="col-sm-2">QuantityServings</dt>
+            <dd class="col-sm-10">@dietlog.QuantityServings</dd>
+            <dt class="col-sm-2">TotalCalories</dt>
+            <dd class="col-sm-10">@dietlog.TotalCalories</dd>
+            <dt class="col-sm-2">CustomFoodName</dt>
+            <dd class="col-sm-10">@dietlog.CustomFoodName</dd>
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@dietlog.DateCreated</dd>
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@dietlog.DateUpdated</dd>
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@dietlog.CreatedBy</dd>
+            <dt class="col-sm-2">UpdatedBy</dt>
+            <dd class="col-sm-10">@dietlog.UpdatedBy</dd>
+        </dl>
+        <div>
+            <a href="@($"/dietlogs/edit?id={dietlog.Id}")">Edit</a> |
+            <a href="@($"/dietlogs")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private DietLog? dietlog;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        dietlog = await context.DietLog.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (dietlog is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

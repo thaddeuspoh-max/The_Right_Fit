@@ -1,0 +1,87 @@
+﻿@page "/exercises/delete"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Delete</PageTitle>
+
+<h1>Delete</h1>
+
+<p>Are you sure you want to delete this?</p>
+<div>
+    <h2>Exercise</h2>
+    <hr />
+    @if (exercise is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">ExerciseName</dt>
+            <dd class="col-sm-10">@exercise.ExerciseName</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">MuscleGroup</dt>
+            <dd class="col-sm-10">@exercise.MuscleGroup</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">EquipmentNeeded</dt>
+            <dd class="col-sm-10">@exercise.EquipmentNeeded</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">Instructions</dt>
+            <dd class="col-sm-10">@exercise.Instructions</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">VideoUrl</dt>
+            <dd class="col-sm-10">@exercise.VideoUrl</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@exercise.DateCreated</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@exercise.DateUpdated</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@exercise.CreatedBy</dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-sm-2">UpdatedBy</dt>
+            <dd class="col-sm-10">@exercise.UpdatedBy</dd>
+        </dl>
+        <EditForm method="post" Model="exercise" OnValidSubmit="DeleteExercise" FormName="delete" Enhance>
+            <button type="submit" class="btn btn-danger" disabled="@(exercise is null)">Delete</button> |
+            <a href="/exercises">Back to List</a>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private Exercise? exercise;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        exercise = await context.Exercise.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (exercise is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task DeleteExercise()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Exercise.Remove(exercise!);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/exercises");
+    }
+}

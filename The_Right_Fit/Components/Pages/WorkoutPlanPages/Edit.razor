@@ -1,0 +1,134 @@
+﻿@page "/workoutplans/edit"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>WorkoutPlan</h2>
+<hr />
+@if (WorkoutPlan is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="WorkoutPlan" OnValidSubmit="UpdateWorkoutPlan" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="WorkoutPlan.Id" value="@WorkoutPlan.Id" />
+                <div class="mb-3">
+                    <label for="userid" class="form-label">UserId:</label>
+                    <InputNumber id="userid" @bind-Value="WorkoutPlan.UserId" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.UserId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="trainerid" class="form-label">TrainerId:</label>
+                    <InputNumber id="trainerid" @bind-Value="WorkoutPlan.TrainerId" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.TrainerId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="planname" class="form-label">PlanName:</label>
+                    <InputText id="planname" @bind-Value="WorkoutPlan.PlanName" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.PlanName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="goaltype" class="form-label">GoalType:</label>
+                    <InputText id="goaltype" @bind-Value="WorkoutPlan.GoalType" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.GoalType" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="difficultylevel" class="form-label">DifficultyLevel:</label>
+                    <InputText id="difficultylevel" @bind-Value="WorkoutPlan.DifficultyLevel" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.DifficultyLevel" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="durationweeks" class="form-label">DurationWeeks:</label>
+                    <InputNumber id="durationweeks" @bind-Value="WorkoutPlan.DurationWeeks" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.DurationWeeks" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="datecreated" class="form-label">DateCreated:</label>
+                    <InputDate id="datecreated" @bind-Value="WorkoutPlan.DateCreated" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.DateCreated" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="dateupdated" class="form-label">DateUpdated:</label>
+                    <InputDate id="dateupdated" @bind-Value="WorkoutPlan.DateUpdated" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.DateUpdated" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="createdby" class="form-label">CreatedBy:</label>
+                    <InputText id="createdby" @bind-Value="WorkoutPlan.CreatedBy" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.CreatedBy" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="updatedby" class="form-label">UpdatedBy:</label>
+                    <InputText id="updatedby" @bind-Value="WorkoutPlan.UpdatedBy" class="form-control" />
+                    <ValidationMessage For="() => WorkoutPlan.UpdatedBy" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/workoutplans">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private WorkoutPlan? WorkoutPlan { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        WorkoutPlan ??= await context.WorkoutPlan.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (WorkoutPlan is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateWorkoutPlan()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(WorkoutPlan!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!WorkoutPlanExists(WorkoutPlan!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/workoutplans");
+    }
+
+    private bool WorkoutPlanExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.WorkoutPlan.Any(e => e.Id == id);
+    }
+}

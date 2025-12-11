@@ -1,0 +1,84 @@
+﻿@page "/fooditems/create"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>FoodItems</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="FoodItems" OnValidSubmit="AddFoodItems" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="name" class="form-label">Name:</label> 
+                <InputText id="name" @bind-Value="FoodItems.Name" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.Name" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="servingsizedescription" class="form-label">ServingSizeDescription:</label> 
+                <InputText id="servingsizedescription" @bind-Value="FoodItems.ServingSizeDescription" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.ServingSizeDescription" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="calories" class="form-label">Calories:</label> 
+                <InputNumber id="calories" @bind-Value="FoodItems.Calories" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.Calories" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="iscustom" class="form-label">IsCustom:</label> 
+                <InputNumber id="iscustom" @bind-Value="FoodItems.IsCustom" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.IsCustom" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="createdbyuserid" class="form-label">CreatedByUserId:</label> 
+                <InputNumber id="createdbyuserid" @bind-Value="FoodItems.CreatedByUserId" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.CreatedByUserId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="datecreated" class="form-label">DateCreated:</label> 
+                <InputDate id="datecreated" @bind-Value="FoodItems.DateCreated" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.DateCreated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="dateupdated" class="form-label">DateUpdated:</label> 
+                <InputDate id="dateupdated" @bind-Value="FoodItems.DateUpdated" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.DateUpdated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="createdby" class="form-label">CreatedBy:</label> 
+                <InputText id="createdby" @bind-Value="FoodItems.CreatedBy" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.CreatedBy" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="updatedby" class="form-label">UpdatedBy:</label> 
+                <InputText id="updatedby" @bind-Value="FoodItems.UpdatedBy" class="form-control" /> 
+                <ValidationMessage For="() => FoodItems.UpdatedBy" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/fooditems">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private FoodItems FoodItems { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddFoodItems()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.FoodItems.Add(FoodItems);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/fooditems");
+    }
+}

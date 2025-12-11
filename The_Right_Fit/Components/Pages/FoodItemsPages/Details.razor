@@ -1,0 +1,62 @@
+﻿@page "/fooditems/details"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>FoodItems</h2>
+    <hr />
+    @if (fooditems is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@fooditems.Name</dd>
+            <dt class="col-sm-2">ServingSizeDescription</dt>
+            <dd class="col-sm-10">@fooditems.ServingSizeDescription</dd>
+            <dt class="col-sm-2">Calories</dt>
+            <dd class="col-sm-10">@fooditems.Calories</dd>
+            <dt class="col-sm-2">IsCustom</dt>
+            <dd class="col-sm-10">@fooditems.IsCustom</dd>
+            <dt class="col-sm-2">CreatedByUserId</dt>
+            <dd class="col-sm-10">@fooditems.CreatedByUserId</dd>
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@fooditems.DateCreated</dd>
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@fooditems.DateUpdated</dd>
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@fooditems.CreatedBy</dd>
+            <dt class="col-sm-2">UpdatedBy</dt>
+            <dd class="col-sm-10">@fooditems.UpdatedBy</dd>
+        </dl>
+        <div>
+            <a href="@($"/fooditems/edit?id={fooditems.Id}")">Edit</a> |
+            <a href="@($"/fooditems")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private FoodItems? fooditems;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        fooditems = await context.FoodItems.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (fooditems is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

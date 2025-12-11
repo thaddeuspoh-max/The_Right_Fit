@@ -1,0 +1,46 @@
+﻿@page "/dietlogs"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using The_Right_Fit.Domain
+@using The_Right_Fit.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="dietlogs/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.DietLog">
+    <PropertyColumn Property="dietlog => dietlog.UserId" />
+    <PropertyColumn Property="dietlog => dietlog.FoodItemId" />
+    <PropertyColumn Property="dietlog => dietlog.LogDate" />
+    <PropertyColumn Property="dietlog => dietlog.MealType" />
+    <PropertyColumn Property="dietlog => dietlog.QuantityServings" />
+    <PropertyColumn Property="dietlog => dietlog.TotalCalories" />
+    <PropertyColumn Property="dietlog => dietlog.CustomFoodName" />
+    <PropertyColumn Property="dietlog => dietlog.DateCreated" />
+    <PropertyColumn Property="dietlog => dietlog.DateUpdated" />
+    <PropertyColumn Property="dietlog => dietlog.CreatedBy" />
+    <PropertyColumn Property="dietlog => dietlog.UpdatedBy" />
+
+    <TemplateColumn Context="dietlog">
+        <a href="@($"dietlogs/edit?id={dietlog.Id}")">Edit</a> |
+        <a href="@($"dietlogs/details?id={dietlog.Id}")">Details</a> |
+        <a href="@($"dietlogs/delete?id={dietlog.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private The_Right_FitContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

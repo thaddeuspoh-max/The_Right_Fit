@@ -1,0 +1,139 @@
+﻿@page "/dietlogs/edit"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>DietLog</h2>
+<hr />
+@if (DietLog is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="DietLog" OnValidSubmit="UpdateDietLog" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="DietLog.Id" value="@DietLog.Id" />
+                <div class="mb-3">
+                    <label for="userid" class="form-label">UserId:</label>
+                    <InputNumber id="userid" @bind-Value="DietLog.UserId" class="form-control" />
+                    <ValidationMessage For="() => DietLog.UserId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="fooditemid" class="form-label">FoodItemId:</label>
+                    <InputNumber id="fooditemid" @bind-Value="DietLog.FoodItemId" class="form-control" />
+                    <ValidationMessage For="() => DietLog.FoodItemId" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="logdate" class="form-label">LogDate:</label>
+                    <InputDate id="logdate" @bind-Value="DietLog.LogDate" class="form-control" />
+                    <ValidationMessage For="() => DietLog.LogDate" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="mealtype" class="form-label">MealType:</label>
+                    <InputText id="mealtype" @bind-Value="DietLog.MealType" class="form-control" />
+                    <ValidationMessage For="() => DietLog.MealType" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="quantityservings" class="form-label">QuantityServings:</label>
+                    <InputNumber id="quantityservings" @bind-Value="DietLog.QuantityServings" class="form-control" />
+                    <ValidationMessage For="() => DietLog.QuantityServings" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="totalcalories" class="form-label">TotalCalories:</label>
+                    <InputNumber id="totalcalories" @bind-Value="DietLog.TotalCalories" class="form-control" />
+                    <ValidationMessage For="() => DietLog.TotalCalories" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="customfoodname" class="form-label">CustomFoodName:</label>
+                    <InputText id="customfoodname" @bind-Value="DietLog.CustomFoodName" class="form-control" />
+                    <ValidationMessage For="() => DietLog.CustomFoodName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="datecreated" class="form-label">DateCreated:</label>
+                    <InputDate id="datecreated" @bind-Value="DietLog.DateCreated" class="form-control" />
+                    <ValidationMessage For="() => DietLog.DateCreated" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="dateupdated" class="form-label">DateUpdated:</label>
+                    <InputDate id="dateupdated" @bind-Value="DietLog.DateUpdated" class="form-control" />
+                    <ValidationMessage For="() => DietLog.DateUpdated" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="createdby" class="form-label">CreatedBy:</label>
+                    <InputText id="createdby" @bind-Value="DietLog.CreatedBy" class="form-control" />
+                    <ValidationMessage For="() => DietLog.CreatedBy" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="updatedby" class="form-label">UpdatedBy:</label>
+                    <InputText id="updatedby" @bind-Value="DietLog.UpdatedBy" class="form-control" />
+                    <ValidationMessage For="() => DietLog.UpdatedBy" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/dietlogs">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private DietLog? DietLog { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        DietLog ??= await context.DietLog.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (DietLog is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateDietLog()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(DietLog!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!DietLogExists(DietLog!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/dietlogs");
+    }
+
+    private bool DietLogExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.DietLog.Any(e => e.Id == id);
+    }
+}

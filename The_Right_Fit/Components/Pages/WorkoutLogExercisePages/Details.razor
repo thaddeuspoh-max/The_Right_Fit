@@ -1,0 +1,60 @@
+﻿@page "/workoutlogexercises/details"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>WorkoutLogExercise</h2>
+    <hr />
+    @if (workoutlogexercise is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">WorkoutLogId</dt>
+            <dd class="col-sm-10">@workoutlogexercise.WorkoutLogId</dd>
+            <dt class="col-sm-2">ExerciseId</dt>
+            <dd class="col-sm-10">@workoutlogexercise.ExerciseId</dd>
+            <dt class="col-sm-2">ActualSets</dt>
+            <dd class="col-sm-10">@workoutlogexercise.ActualSets</dd>
+            <dt class="col-sm-2">ActualReps</dt>
+            <dd class="col-sm-10">@workoutlogexercise.ActualReps</dd>
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@workoutlogexercise.DateCreated</dd>
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@workoutlogexercise.DateUpdated</dd>
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@workoutlogexercise.CreatedBy</dd>
+            <dt class="col-sm-2">UpdatedBy</dt>
+            <dd class="col-sm-10">@workoutlogexercise.UpdatedBy</dd>
+        </dl>
+        <div>
+            <a href="@($"/workoutlogexercises/edit?id={workoutlogexercise.Id}")">Edit</a> |
+            <a href="@($"/workoutlogexercises")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private WorkoutLogExercise? workoutlogexercise;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        workoutlogexercise = await context.WorkoutLogExercise.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (workoutlogexercise is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

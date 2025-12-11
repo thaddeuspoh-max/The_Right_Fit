@@ -1,0 +1,129 @@
+﻿@page "/exercises/edit"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Exercise</h2>
+<hr />
+@if (Exercise is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Exercise" OnValidSubmit="UpdateExercise" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Exercise.Id" value="@Exercise.Id" />
+                <div class="mb-3">
+                    <label for="exercisename" class="form-label">ExerciseName:</label>
+                    <InputText id="exercisename" @bind-Value="Exercise.ExerciseName" class="form-control" />
+                    <ValidationMessage For="() => Exercise.ExerciseName" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="musclegroup" class="form-label">MuscleGroup:</label>
+                    <InputText id="musclegroup" @bind-Value="Exercise.MuscleGroup" class="form-control" />
+                    <ValidationMessage For="() => Exercise.MuscleGroup" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="equipmentneeded" class="form-label">EquipmentNeeded:</label>
+                    <InputText id="equipmentneeded" @bind-Value="Exercise.EquipmentNeeded" class="form-control" />
+                    <ValidationMessage For="() => Exercise.EquipmentNeeded" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="instructions" class="form-label">Instructions:</label>
+                    <InputText id="instructions" @bind-Value="Exercise.Instructions" class="form-control" />
+                    <ValidationMessage For="() => Exercise.Instructions" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="videourl" class="form-label">VideoUrl:</label>
+                    <InputText id="videourl" @bind-Value="Exercise.VideoUrl" class="form-control" />
+                    <ValidationMessage For="() => Exercise.VideoUrl" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="datecreated" class="form-label">DateCreated:</label>
+                    <InputDate id="datecreated" @bind-Value="Exercise.DateCreated" class="form-control" />
+                    <ValidationMessage For="() => Exercise.DateCreated" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="dateupdated" class="form-label">DateUpdated:</label>
+                    <InputDate id="dateupdated" @bind-Value="Exercise.DateUpdated" class="form-control" />
+                    <ValidationMessage For="() => Exercise.DateUpdated" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="createdby" class="form-label">CreatedBy:</label>
+                    <InputText id="createdby" @bind-Value="Exercise.CreatedBy" class="form-control" />
+                    <ValidationMessage For="() => Exercise.CreatedBy" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="updatedby" class="form-label">UpdatedBy:</label>
+                    <InputText id="updatedby" @bind-Value="Exercise.UpdatedBy" class="form-control" />
+                    <ValidationMessage For="() => Exercise.UpdatedBy" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/exercises">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Exercise? Exercise { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Exercise ??= await context.Exercise.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Exercise is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateExercise()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Exercise!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!ExerciseExists(Exercise!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/exercises");
+    }
+
+    private bool ExerciseExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Exercise.Any(e => e.Id == id);
+    }
+}

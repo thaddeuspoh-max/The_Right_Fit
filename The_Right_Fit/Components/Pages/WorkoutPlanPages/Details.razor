@@ -1,0 +1,64 @@
+﻿@page "/workoutplans/details"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>WorkoutPlan</h2>
+    <hr />
+    @if (workoutplan is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">UserId</dt>
+            <dd class="col-sm-10">@workoutplan.UserId</dd>
+            <dt class="col-sm-2">TrainerId</dt>
+            <dd class="col-sm-10">@workoutplan.TrainerId</dd>
+            <dt class="col-sm-2">PlanName</dt>
+            <dd class="col-sm-10">@workoutplan.PlanName</dd>
+            <dt class="col-sm-2">GoalType</dt>
+            <dd class="col-sm-10">@workoutplan.GoalType</dd>
+            <dt class="col-sm-2">DifficultyLevel</dt>
+            <dd class="col-sm-10">@workoutplan.DifficultyLevel</dd>
+            <dt class="col-sm-2">DurationWeeks</dt>
+            <dd class="col-sm-10">@workoutplan.DurationWeeks</dd>
+            <dt class="col-sm-2">DateCreated</dt>
+            <dd class="col-sm-10">@workoutplan.DateCreated</dd>
+            <dt class="col-sm-2">DateUpdated</dt>
+            <dd class="col-sm-10">@workoutplan.DateUpdated</dd>
+            <dt class="col-sm-2">CreatedBy</dt>
+            <dd class="col-sm-10">@workoutplan.CreatedBy</dd>
+            <dt class="col-sm-2">UpdatedBy</dt>
+            <dd class="col-sm-10">@workoutplan.UpdatedBy</dd>
+        </dl>
+        <div>
+            <a href="@($"/workoutplans/edit?id={workoutplan.Id}")">Edit</a> |
+            <a href="@($"/workoutplans")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private WorkoutPlan? workoutplan;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        workoutplan = await context.WorkoutPlan.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (workoutplan is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+}

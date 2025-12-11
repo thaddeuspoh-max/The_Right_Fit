@@ -1,0 +1,84 @@
+﻿@page "/workoutplanexercises/create"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>WorkoutPlanExercise</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="WorkoutPlanExercise" OnValidSubmit="AddWorkoutPlanExercise" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="workoutplanid" class="form-label">WorkoutPlanId:</label> 
+                <InputNumber id="workoutplanid" @bind-Value="WorkoutPlanExercise.WorkoutPlanId" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.WorkoutPlanId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="exerciseid" class="form-label">ExerciseId:</label> 
+                <InputNumber id="exerciseid" @bind-Value="WorkoutPlanExercise.ExerciseId" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.ExerciseId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="dayofweek" class="form-label">DayOfWeek:</label> 
+                <InputNumber id="dayofweek" @bind-Value="WorkoutPlanExercise.DayOfWeek" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.DayOfWeek" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="sets" class="form-label">Sets:</label> 
+                <InputNumber id="sets" @bind-Value="WorkoutPlanExercise.Sets" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.Sets" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="reps" class="form-label">Reps:</label> 
+                <InputNumber id="reps" @bind-Value="WorkoutPlanExercise.Reps" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.Reps" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="datecreated" class="form-label">DateCreated:</label> 
+                <InputDate id="datecreated" @bind-Value="WorkoutPlanExercise.DateCreated" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.DateCreated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="dateupdated" class="form-label">DateUpdated:</label> 
+                <InputDate id="dateupdated" @bind-Value="WorkoutPlanExercise.DateUpdated" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.DateUpdated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="createdby" class="form-label">CreatedBy:</label> 
+                <InputText id="createdby" @bind-Value="WorkoutPlanExercise.CreatedBy" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.CreatedBy" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="updatedby" class="form-label">UpdatedBy:</label> 
+                <InputText id="updatedby" @bind-Value="WorkoutPlanExercise.UpdatedBy" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutPlanExercise.UpdatedBy" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/workoutplanexercises">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private WorkoutPlanExercise WorkoutPlanExercise { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddWorkoutPlanExercise()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.WorkoutPlanExercise.Add(WorkoutPlanExercise);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/workoutplanexercises");
+    }
+}

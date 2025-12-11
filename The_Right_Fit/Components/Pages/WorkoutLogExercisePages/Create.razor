@@ -1,0 +1,79 @@
+﻿@page "/workoutlogexercises/create"
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>WorkoutLogExercise</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="WorkoutLogExercise" OnValidSubmit="AddWorkoutLogExercise" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="workoutlogid" class="form-label">WorkoutLogId:</label> 
+                <InputNumber id="workoutlogid" @bind-Value="WorkoutLogExercise.WorkoutLogId" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.WorkoutLogId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="exerciseid" class="form-label">ExerciseId:</label> 
+                <InputNumber id="exerciseid" @bind-Value="WorkoutLogExercise.ExerciseId" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.ExerciseId" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="actualsets" class="form-label">ActualSets:</label> 
+                <InputNumber id="actualsets" @bind-Value="WorkoutLogExercise.ActualSets" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.ActualSets" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="actualreps" class="form-label">ActualReps:</label> 
+                <InputText id="actualreps" @bind-Value="WorkoutLogExercise.ActualReps" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.ActualReps" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="datecreated" class="form-label">DateCreated:</label> 
+                <InputDate id="datecreated" @bind-Value="WorkoutLogExercise.DateCreated" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.DateCreated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="dateupdated" class="form-label">DateUpdated:</label> 
+                <InputDate id="dateupdated" @bind-Value="WorkoutLogExercise.DateUpdated" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.DateUpdated" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="createdby" class="form-label">CreatedBy:</label> 
+                <InputText id="createdby" @bind-Value="WorkoutLogExercise.CreatedBy" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.CreatedBy" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="updatedby" class="form-label">UpdatedBy:</label> 
+                <InputText id="updatedby" @bind-Value="WorkoutLogExercise.UpdatedBy" class="form-control" /> 
+                <ValidationMessage For="() => WorkoutLogExercise.UpdatedBy" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/workoutlogexercises">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private WorkoutLogExercise WorkoutLogExercise { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddWorkoutLogExercise()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.WorkoutLogExercise.Add(WorkoutLogExercise);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/workoutlogexercises");
+    }
+}

@@ -1,0 +1,43 @@
+﻿@page "/workoutlogexercises"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using The_Right_Fit.Domain
+@using The_Right_Fit.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="workoutlogexercises/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.WorkoutLogExercise">
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.WorkoutLogId" />
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.ExerciseId" />
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.ActualSets" />
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.ActualReps" />
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.DateCreated" />
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.DateUpdated" />
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.CreatedBy" />
+    <PropertyColumn Property="workoutlogexercise => workoutlogexercise.UpdatedBy" />
+
+    <TemplateColumn Context="workoutlogexercise">
+        <a href="@($"workoutlogexercises/edit?id={workoutlogexercise.Id}")">Edit</a> |
+        <a href="@($"workoutlogexercises/details?id={workoutlogexercise.Id}")">Details</a> |
+        <a href="@($"workoutlogexercises/delete?id={workoutlogexercise.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private The_Right_FitContext context = default!;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
