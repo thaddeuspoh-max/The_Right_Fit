@@ -1,110 +1,197 @@
 ﻿@page "/admin/create-trainer"
 
-@using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.Forms
 @using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
+@using System.Text
+@using System.Text.Encodings.Web
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.WebUtilities
 @using The_Right_Fit.Data
+@using System.Security.Claims
 
 @attribute [Authorize(Roles = "Administrator")]
 
-<h3>Create Trainer</h3>
+@inject UserManager<The_Right_FitUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@inject IEmailSender<The_Right_FitUser> EmailSender
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
 
-<EditForm Model="@Input" OnValidSubmit="CreateTrainerAsync">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+<PageTitle>Register Trainer</PageTitle>
 
-    <div class="mb-3">
-        <label class="form-label">First Name</label>
-        <InputText class="form-control" @bind-Value="Input.FirstName" />
-        <ValidationMessage For="@(() => Input.FirstName)" />
+<h1>Register Trainer</h1>
+
+<div class="row">
+    <div class="col-md-4">
+
+        <StatusMessage Message="@Message" />
+
+        <EditForm Model="Input"
+                  OnValidSubmit="CreateTrainer"
+                  method="post"
+                  FormName="createTrainerForm">
+
+            <DataAnnotationsValidator />
+            <h2>Create a trainer account.</h2>
+            <hr />
+            <ValidationSummary class="text-danger" role="alert" />
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Email"
+                           class="form-control"
+                           autocomplete="username"
+                           aria-required="true"
+                           placeholder="trainer@example.com" />
+                <label>Email</label>
+                <ValidationMessage For="() => Input.Email" class="text-danger" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.FirstName"
+                           class="form-control"
+                           autocomplete="given-name"
+                           aria-required="true"
+                           placeholder="John" />
+                <label>First Name</label>
+                <ValidationMessage For="() => Input.FirstName" class="text-danger" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.LastName"
+                           class="form-control"
+                           autocomplete="family-name"
+                           aria-required="true"
+                           placeholder="Tan" />
+                <label>Last Name</label>
+                <ValidationMessage For="() => Input.LastName" class="text-danger" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText type="password"
+                           @bind-Value="Input.Password"
+                           class="form-control"
+                           autocomplete="new-password"
+                           aria-required="true"
+                           placeholder="password" />
+                <label>Password</label>
+                <ValidationMessage For="() => Input.Password" class="text-danger" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputText type="password"
+                           @bind-Value="Input.ConfirmPassword"
+                           class="form-control"
+                           autocomplete="new-password"
+                           aria-required="true"
+                           placeholder="password" />
+                <label>Confirm Password</label>
+                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+            </div>
+
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Create Trainer</button>
+        </EditForm>
+
     </div>
-
-    <div class="mb-3">
-        <label class="form-label">Last Name</label>
-        <InputText class="form-control" @bind-Value="Input.LastName" />
-        <ValidationMessage For="@(() => Input.LastName)" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Email</label>
-        <InputText class="form-control" @bind-Value="Input.Email" />
-        <ValidationMessage For="@(() => Input.Email)" />
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Password</label>
-        <InputText type="password" class="form-control" @bind-Value="Input.Password" />
-        <ValidationMessage For="@(() => Input.Password)" />
-    </div>
-
-    <button type="submit" class="btn btn-primary">Create Trainer</button>
-</EditForm>
+</div>
 
 @code {
-    [Inject] private UserManager<The_Right_FitUser> UserManager { get; set; } = default!;
-    [Inject] private RoleManager<IdentityRole> RoleManager { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    private IEnumerable<IdentityError>? identityErrors;
 
-    public class TrainerInputModel
-    {
-        [Required]
-        public string FirstName { get; set; } = string.Empty;
+    private string? Message => identityErrors is null
+        ? null
+        : $"Error: {string.Join(", ", identityErrors.Select(e => e.Description))}";
 
-        [Required]
-        public string LastName { get; set; } = string.Empty;
-
-        [Required, EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required, MinLength(6)]
-        public string Password { get; set; } = string.Empty;
-    }
-
+    [SupplyParameterFromForm]
     private TrainerInputModel Input { get; set; } = new();
 
-    private async Task CreateTrainerAsync()
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    public async Task CreateTrainer(EditContext editContext)
     {
-        // Make sure the Trainer role exists (safety)
+        identityErrors = null;
+
+        // Ensure Trainer role exists
         if (!await RoleManager.RoleExistsAsync("Trainer"))
         {
-            await RoleManager.CreateAsync(new IdentityRole("Trainer"));
+            var roleResult = await RoleManager.CreateAsync(new IdentityRole("Trainer"));
+            if (!roleResult.Succeeded)
+            {
+                identityErrors = roleResult.Errors;
+                return;
+            }
         }
 
+        // Create trainer user (DO NOT set EmailConfirmed=true, since we want confirmation)
         var user = new The_Right_FitUser
         {
             UserName = Input.Email,
-            NormalizedUserName = Input.Email.ToUpper(),
             Email = Input.Email,
-            NormalizedEmail = Input.Email.ToUpper(),
             FirstName = Input.FirstName,
-            LastName = Input.LastName,
-            EmailConfirmed = true
+            LastName = Input.LastName
         };
 
         var result = await UserManager.CreateAsync(user, Input.Password);
 
-        if (result.Succeeded)
+        if (!result.Succeeded)
         {
-            // Assign Trainer role
-            await UserManager.AddToRoleAsync(user, "Trainer");
-
-            // Optional: userId claim
-            await UserManager.AddClaimAsync(
-                user,
-                new Claim("userId", user.Id));
-
-            Navigation.NavigateTo("/");
+            identityErrors = result.Errors;
+            return;
         }
-        else
+
+        // Assign Trainer role
+        var addRoleResult = await UserManager.AddToRoleAsync(user, "Trainer");
+        if (!addRoleResult.Succeeded)
         {
-            // These will show up in <ValidationSummary />
-            foreach (var error in result.Errors)
-            {
-                Console.WriteLine(error.Description);
-            }
+            identityErrors = addRoleResult.Errors;
+            return;
         }
+
+        // Add claim (optional, same style as your RegisterUser)
+        var claimResult = await UserManager.AddClaimAsync(user, new Claim("userId", user.Id));
+        if (!claimResult.Succeeded)
+        {
+            identityErrors = claimResult.Errors;
+            return;
+        }
+
+        // Generate email confirmation link (same as RegisterUser)
+        var userId = await UserManager.GetUserIdAsync(user);
+        var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
+        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+        var callbackUrl = NavigationManager.GetUriWithQueryParameters(
+            NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
+            new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code, ["returnUrl"] = ReturnUrl });
+
+        await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
+
+        // Always redirect to RegisterConfirmation page so admin can click the link (NoOp sender)
+        RedirectManager.RedirectTo(
+            "Account/RegisterConfirmation",
+            new() { ["email"] = Input.Email, ["returnUrl"] = ReturnUrl });
+    }
+
+    private sealed class TrainerInputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        public string FirstName { get; set; } = "";
+
+        [Required]
+        public string LastName { get; set; } = "";
+
+        [Required]
+        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; } = "";
     }
 }
