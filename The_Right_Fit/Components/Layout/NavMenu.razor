@@ -1,5 +1,7 @@
 ﻿@implements IDisposable
 @inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Authorization
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">The_Right_Fit</a>
@@ -10,18 +12,97 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
+        <!-- Home -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
 
-        
+        <AuthorizeView>
+            <Authorized>
+                <!-- Logged in: show username + account manage -->
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Manage">
+                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span>
+                        @context.User.Identity?.Name
+                    </NavLink>
+                </div>
+
+                <!-- Admin-only links -->
+                <AuthorizeView Roles="Administrator" Context="innerContext">
+                    <Authorized>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="admin/create-trainer">
+                                <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Create Trainer
+                            </NavLink>
+                        </div>
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="workoutplans">
+                                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Workout Plans
+                            </NavLink>
+                        </div>
+
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="exercises">
+                                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Exercises
+                            </NavLink>
+                        </div>
+
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="fooditems">
+                                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Food Items
+                            </NavLink>
+                        </div>
+                        
+                    </Authorized>
+                </AuthorizeView>
+
+                <!-- Links for any logged in user -->
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="bookings">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Bookings
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="dietlogs">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Diet Logs
+                    </NavLink>
+                </div>
+
+                <!-- Logout -->
+                <div class="nav-item px-3">
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                        <button type="submit" class="nav-link">
+                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                        </button>
+                    </form>
+                </div>
+            </Authorized>
+
+            <NotAuthorized>
+                <!-- Not logged in: show Register + Login -->
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Register">
+                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="Account/Login">
+                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
     </nav>
 </div>
 
 @code {
     private string? currentUrl;
+
     protected override void OnInitialized()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
@@ -38,5 +119,4 @@
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
-
 }

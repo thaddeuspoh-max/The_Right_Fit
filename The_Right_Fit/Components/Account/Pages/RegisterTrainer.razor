@@ -1,0 +1,110 @@
+﻿@page "/admin/create-trainer"
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using The_Right_Fit.Data
+
+@attribute [Authorize(Roles = "Administrator")]
+
+<h3>Create Trainer</h3>
+
+<EditForm Model="@Input" OnValidSubmit="CreateTrainerAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">First Name</label>
+        <InputText class="form-control" @bind-Value="Input.FirstName" />
+        <ValidationMessage For="@(() => Input.FirstName)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Last Name</label>
+        <InputText class="form-control" @bind-Value="Input.LastName" />
+        <ValidationMessage For="@(() => Input.LastName)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <InputText class="form-control" @bind-Value="Input.Email" />
+        <ValidationMessage For="@(() => Input.Email)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText type="password" class="form-control" @bind-Value="Input.Password" />
+        <ValidationMessage For="@(() => Input.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create Trainer</button>
+</EditForm>
+
+@code {
+    [Inject] private UserManager<The_Right_FitUser> UserManager { get; set; } = default!;
+    [Inject] private RoleManager<IdentityRole> RoleManager { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    public class TrainerInputModel
+    {
+        [Required]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required, MinLength(6)]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private TrainerInputModel Input { get; set; } = new();
+
+    private async Task CreateTrainerAsync()
+    {
+        // Make sure the Trainer role exists (safety)
+        if (!await RoleManager.RoleExistsAsync("Trainer"))
+        {
+            await RoleManager.CreateAsync(new IdentityRole("Trainer"));
+        }
+
+        var user = new The_Right_FitUser
+        {
+            UserName = Input.Email,
+            NormalizedUserName = Input.Email.ToUpper(),
+            Email = Input.Email,
+            NormalizedEmail = Input.Email.ToUpper(),
+            FirstName = Input.FirstName,
+            LastName = Input.LastName,
+            EmailConfirmed = true
+        };
+
+        var result = await UserManager.CreateAsync(user, Input.Password);
+
+        if (result.Succeeded)
+        {
+            // Assign Trainer role
+            await UserManager.AddToRoleAsync(user, "Trainer");
+
+            // Optional: userId claim
+            await UserManager.AddClaimAsync(
+                user,
+                new Claim("userId", user.Id));
+
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            // These will show up in <ValidationSummary />
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine(error.Description);
+            }
+        }
+    }
+}
