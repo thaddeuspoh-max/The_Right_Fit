@@ -1,7 +1,138 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager Nav
 
-<PageTitle>Home</PageTitle>
+<PageTitle>The Right Fit</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="lp" id="home">
 
-Welcome to your new app.
+    <!-- HERO -->
+    <section class="lp-hero">
+        <div class="lp-wrap lp-hero-grid">
+
+            <div class="lp-hero-left">
+                <h1 class="lp-title">
+                    Your Personal<br />
+                    Trainer in <span class="lp-accent">Your<br />Pocket</span>
+                </h1>
+
+                <p class="lp-desc">
+                    Achieve your fitness goals with customized workout plans,
+                    comprehensive exercise libraries, and intelligent diet
+                    tracking. Start your journey today.
+                </p>
+
+                <!-- ✅ WORKS: NavLink instead of button -->
+                <div class="lp-cta">
+                    <NavLink class="lp-btn" href="/Account/Register" Match="NavLinkMatch.Prefix">
+                        Get Started
+                    </NavLink>
+                </div>
+            </div>
+
+            <div class="lp-hero-right">
+                <div class="lp-image-card">
+                    <img class="lp-image"
+                         src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=80"
+                         alt="Training image" />
+
+                    <!-- overlay “progress bars” like your screenshot -->
+                    <div class="lp-image-overlay">
+                        <div class="lp-progress">
+                            <div class="lp-progress-fill" style="width:55%"></div>
+                        </div>
+                        <div class="lp-progress thin">
+                            <div class="lp-progress-fill" style="width:35%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="lp-band" id="features">
+        <div class="lp-wrap">
+
+            <div class="lp-head">
+                <div class="lp-kicker">FEATURES</div>
+                <h2 class="lp-h2">Everything you need to succeed</h2>
+            </div>
+
+            <div class="lp-cards">
+                <article class="lp-card">
+                    <div class="lp-icon">🏋️</div>
+                    <h3>Workout Plans</h3>
+                    <p>
+                        Customized routines tailored to your goals, whether it's muscle building,
+                        fat loss, or endurance.
+                    </p>
+                </article>
+
+                <article class="lp-card">
+                    <div class="lp-icon">📘</div>
+                    <h3>Exercise Library</h3>
+                    <p>
+                        Access hundreds of exercises with detailed instructions and video demonstrations.
+                    </p>
+                </article>
+
+                <article class="lp-card">
+                    <div class="lp-icon">🍽️</div>
+                    <h3>Diet Tracking</h3>
+                    <p>
+                        Monitor your daily caloric intake and macronutrients to stay on top of your nutrition.
+                    </p>
+                </article>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="lp-how" id="how">
+        <div class="lp-wrap">
+
+            <div class="lp-head">
+                <h2 class="lp-h2">How It Works</h2>
+                <p class="lp-muted">Get started in three simple steps.</p>
+            </div>
+
+            <div class="lp-steps">
+                <div class="lp-step">
+                    <div class="lp-step-num">1</div>
+                    <h4>Create Account</h4>
+                    <p>Sign up quickly and set your profile preferences.</p>
+                </div>
+
+                <div class="lp-step">
+                    <div class="lp-step-num">2</div>
+                    <h4>Get Plan</h4>
+                    <p>Receive a tailored workout and nutrition plan.</p>
+                </div>
+
+                <div class="lp-step">
+                    <div class="lp-step-num">3</div>
+                    <h4>Track Progress</h4>
+                    <p>Log your workouts and see your results improve.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="lp-footer">
+        <div class="lp-wrap lp-footer-grid">
+            <div>© @DateTime.Now.Year The Right Fit. All rights reserved.</div>
+
+            <div class="lp-footer-links">
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+</div>

@@ -7,7 +7,7 @@ namespace The_Right_Fit.Data
 {
     public class The_Right_FitContext(DbContextOptions<The_Right_FitContext> options) : IdentityDbContext<The_Right_FitUser>(options)
     {
-        public DbSet<The_Right_Fit.Domain.Booking> Booking { get; set; } = default!;
+        
         public DbSet<The_Right_Fit.Domain.DietLog> DietLog { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.Exercise> Exercise { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.FoodItems> FoodItems { get; set; } = default!;
