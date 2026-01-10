@@ -1,6 +1,4 @@
 ﻿@page "/"
-@using Microsoft.AspNetCore.Components.Routing
-@inject NavigationManager Nav
 
 <PageTitle>The Right Fit</PageTitle>
 
@@ -21,13 +19,7 @@
                     comprehensive exercise libraries, and intelligent diet
                     tracking. Start your journey today.
                 </p>
-
-                <!-- ✅ WORKS: NavLink instead of button -->
-                <div class="lp-cta">
-                    <NavLink class="lp-btn" href="/Account/Register" Match="NavLinkMatch.Prefix">
-                        Get Started
-                    </NavLink>
-                </div>
+                @* CTA buttons intentionally removed *@
             </div>
 
             <div class="lp-hero-right">
@@ -36,7 +28,7 @@
                          src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1400&q=80"
                          alt="Training image" />
 
-                    <!-- overlay “progress bars” like your screenshot -->
+                    <!-- overlay “progress bars” -->
                     <div class="lp-image-overlay">
                         <div class="lp-progress">
                             <div class="lp-progress-fill" style="width:55%"></div>
@@ -58,6 +50,7 @@
             <div class="lp-head">
                 <div class="lp-kicker">FEATURES</div>
                 <h2 class="lp-h2">Everything you need to succeed</h2>
+                <p class="lp-muted">Clean, fast, and designed to keep you consistent.</p>
             </div>
 
             <div class="lp-cards">
@@ -65,8 +58,8 @@
                     <div class="lp-icon">🏋️</div>
                     <h3>Workout Plans</h3>
                     <p>
-                        Customized routines tailored to your goals, whether it's muscle building,
-                        fat loss, or endurance.
+                        Customized routines tailored to your goals — build muscle,
+                        lose fat, or improve endurance.
                     </p>
                 </article>
 
@@ -74,7 +67,7 @@
                     <div class="lp-icon">📘</div>
                     <h3>Exercise Library</h3>
                     <p>
-                        Access hundreds of exercises with detailed instructions and video demonstrations.
+                        Explore exercises with clear instructions so you always train with good form.
                     </p>
                 </article>
 
@@ -82,7 +75,7 @@
                     <div class="lp-icon">🍽️</div>
                     <h3>Diet Tracking</h3>
                     <p>
-                        Monitor your daily caloric intake and macronutrients to stay on top of your nutrition.
+                        Track calories and macros quickly so your nutrition matches your goals.
                     </p>
                 </article>
             </div>
@@ -115,7 +108,7 @@
                 <div class="lp-step">
                     <div class="lp-step-num">3</div>
                     <h4>Track Progress</h4>
-                    <p>Log your workouts and see your results improve.</p>
+                    <p>Log workouts and meals to see your results improve.</p>
                 </div>
             </div>
 

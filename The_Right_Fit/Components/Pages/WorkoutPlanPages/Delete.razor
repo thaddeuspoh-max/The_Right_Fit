@@ -1,91 +1,72 @@
-﻿@page "/workoutplans/delete"
+﻿@page "/workoutplans/delete/{Id:int}"
 @using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Data
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@inject The_Right_FitContext Db
+@inject NavigationManager Nav
 
-<PageTitle>Delete</PageTitle>
+<PageTitle>Delete Workout Plan</PageTitle>
 
-<h1>Delete</h1>
+<div class="wp">
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Delete Plan</h1>
+            <div class="wp-sub">This action cannot be undone.</div>
+        </div>
 
-<p>Are you sure you want to delete this?</p>
-<div>
-    <h2>WorkoutPlan</h2>
-    <hr />
-    @if (workoutplan is null)
+        <NavLink class="wp-newbtn" href="/workoutplans">Back</NavLink>
+    </div>
+
+    @if (plan == null)
     {
-        <p><em>Loading...</em></p>
+        <div class="wp-loading">Loading…</div>
     }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">UserId</dt>
-            <dd class="col-sm-10">@workoutplan.UserId</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">TrainerId</dt>
-            <dd class="col-sm-10">@workoutplan.TrainerId</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">PlanName</dt>
-            <dd class="col-sm-10">@workoutplan.PlanName</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">GoalType</dt>
-            <dd class="col-sm-10">@workoutplan.GoalType</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">DifficultyLevel</dt>
-            <dd class="col-sm-10">@workoutplan.DifficultyLevel</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">DurationWeeks</dt>
-            <dd class="col-sm-10">@workoutplan.DurationWeeks</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">DateCreated</dt>
-            <dd class="col-sm-10">@workoutplan.DateCreated</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">DateUpdated</dt>
-            <dd class="col-sm-10">@workoutplan.DateUpdated</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">CreatedBy</dt>
-            <dd class="col-sm-10">@workoutplan.CreatedBy</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">UpdatedBy</dt>
-            <dd class="col-sm-10">@workoutplan.UpdatedBy</dd>
-        </dl>
-        <EditForm method="post" Model="workoutplan" OnValidSubmit="DeleteWorkoutPlan" FormName="delete" Enhance>
-            <button type="submit" class="btn btn-danger" disabled="@(workoutplan is null)">Delete</button> |
-            <a href="/workoutplans">Back to List</a>
-        </EditForm>
+    else
+    {
+        <div class="wp-card" style="padding:18px;">
+            <div class="wp-name" style="margin:0;">@Safe(plan.PlanName, "Untitled Plan")</div>
+
+            <div class="wp-desc" style="min-height:auto;">
+                <div><strong>Goal:</strong> @Safe(plan.GoalType, "—")</div>
+                <div><strong>Difficulty:</strong> @Safe(plan.DifficultyLevel, "—")</div>
+                <div><strong>Duration:</strong> @plan.DurationWeeks weeks</div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:16px;">
+                <button class="wp-newbtn"
+                        style="background:#ef4444; border-color:#ef4444;"
+                        @onclick="ConfirmDelete">
+                    Delete
+                </button>
+
+                <button class="wp-newbtn"
+                        style="background:rgba(15,23,42,.06); color:#0f172a; border-color:rgba(15,23,42,.10);"
+                        @onclick="@(() => Nav.NavigateTo("/workoutplans"))">
+                    Cancel
+                </button>
+            </div>
+        </div>
     }
 </div>
 
 @code {
-    private WorkoutPlan? workoutplan;
-
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    [Parameter] public int Id { get; set; }
+    private WorkoutPlan? plan;
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        workoutplan = await context.WorkoutPlan.FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (workoutplan is null)
-        {
-            NavigationManager.NavigateTo("notfound");
-        }
+        plan = await Db.WorkoutPlan.FirstOrDefaultAsync(x => x.Id == Id);
     }
 
-    private async Task DeleteWorkoutPlan()
+    private async Task ConfirmDelete()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.WorkoutPlan.Remove(workoutplan!);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/workoutplans");
+        if (plan is null) return;
+
+        Db.WorkoutPlan.Remove(plan);
+        await Db.SaveChangesAsync();
+        Nav.NavigateTo("/workoutplans");
     }
+
+    private static string Safe(string? v, string fallback) =>
+        string.IsNullOrWhiteSpace(v) ? fallback : v;
 }

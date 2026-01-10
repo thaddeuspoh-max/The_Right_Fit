@@ -1,134 +1,89 @@
-﻿@page "/workoutplans/edit"
+﻿@page "/workoutplans/edit/{Id:int}"
 @using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Data
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@inject The_Right_FitContext Db
+@inject NavigationManager Nav
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Edit Workout Plan</PageTitle>
 
-<h1>Edit</h1>
+<div class="wp">
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Edit Plan</h1>
+            <div class="wp-sub">Update workout plan details.</div>
+        </div>
 
-<h2>WorkoutPlan</h2>
-<hr />
-@if (WorkoutPlan is null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <div class="row">
-        <div class="col-md-4">
-            <EditForm method="post" Model="WorkoutPlan" OnValidSubmit="UpdateWorkoutPlan" FormName="edit" Enhance>
+        <NavLink class="wp-newbtn" href="/workoutplans">Back</NavLink>
+    </div>
+
+    @if (plan == null)
+    {
+        <div class="wp-loading">Loading…</div>
+    }
+    else
+    {
+        <div class="wp-card" style="padding:18px;">
+            <EditForm Model="plan" OnValidSubmit="Save">
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
-                <input type="hidden" name="WorkoutPlan.Id" value="@WorkoutPlan.Id" />
+                <ValidationSummary />
+
                 <div class="mb-3">
-                    <label for="userid" class="form-label">UserId:</label>
-                    <InputNumber id="userid" @bind-Value="WorkoutPlan.UserId" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.UserId" class="text-danger" />
+                    <label class="wp-label">Plan Name</label>
+                    <InputText class="wp-select" @bind-Value="plan.PlanName" />
                 </div>
+
                 <div class="mb-3">
-                    <label for="trainerid" class="form-label">TrainerId:</label>
-                    <InputNumber id="trainerid" @bind-Value="WorkoutPlan.TrainerId" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.TrainerId" class="text-danger" />
+                    <label class="wp-label">Goal Type</label>
+                    <InputText class="wp-select" @bind-Value="plan.GoalType" />
                 </div>
+
                 <div class="mb-3">
-                    <label for="planname" class="form-label">PlanName:</label>
-                    <InputText id="planname" @bind-Value="WorkoutPlan.PlanName" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.PlanName" class="text-danger" />
+                    <label class="wp-label">Difficulty Level</label>
+                    <InputSelect class="wp-select" @bind-Value="plan.DifficultyLevel">
+                        <option value="">Select</option>
+                        <option>Beginner</option>
+                        <option>Intermediate</option>
+                        <option>Advanced</option>
+                    </InputSelect>
                 </div>
+
                 <div class="mb-3">
-                    <label for="goaltype" class="form-label">GoalType:</label>
-                    <InputText id="goaltype" @bind-Value="WorkoutPlan.GoalType" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.GoalType" class="text-danger" />
+                    <label class="wp-label">Duration (Weeks)</label>
+                    <InputNumber class="wp-select" @bind-Value="plan.DurationWeeks" />
                 </div>
+
                 <div class="mb-3">
-                    <label for="difficultylevel" class="form-label">DifficultyLevel:</label>
-                    <InputText id="difficultylevel" @bind-Value="WorkoutPlan.DifficultyLevel" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.DifficultyLevel" class="text-danger" />
+                    <label class="wp-label">UserId (optional)</label>
+                    <InputNumber class="wp-select" @bind-Value="plan.UserId" />
                 </div>
+
                 <div class="mb-3">
-                    <label for="durationweeks" class="form-label">DurationWeeks:</label>
-                    <InputNumber id="durationweeks" @bind-Value="WorkoutPlan.DurationWeeks" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.DurationWeeks" class="text-danger" />
+                    <label class="wp-label">TrainerId (optional)</label>
+                    <InputNumber class="wp-select" @bind-Value="plan.TrainerId" />
                 </div>
-                <div class="mb-3">
-                    <label for="datecreated" class="form-label">DateCreated:</label>
-                    <InputDate id="datecreated" @bind-Value="WorkoutPlan.DateCreated" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.DateCreated" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="dateupdated" class="form-label">DateUpdated:</label>
-                    <InputDate id="dateupdated" @bind-Value="WorkoutPlan.DateUpdated" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.DateUpdated" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="createdby" class="form-label">CreatedBy:</label>
-                    <InputText id="createdby" @bind-Value="WorkoutPlan.CreatedBy" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.CreatedBy" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="updatedby" class="form-label">UpdatedBy:</label>
-                    <InputText id="updatedby" @bind-Value="WorkoutPlan.UpdatedBy" class="form-control" />
-                    <ValidationMessage For="() => WorkoutPlan.UpdatedBy" class="text-danger" />
-                </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+
+                <button class="wp-newbtn" type="submit">Save</button>
             </EditForm>
         </div>
-    </div>
-}
-
-<div>
-    <a href="/workoutplans">Back to List</a>
+    }
 </div>
 
 @code {
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
-
-    [SupplyParameterFromForm]
-    private WorkoutPlan? WorkoutPlan { get; set; }
+    [Parameter] public int Id { get; set; }
+    private WorkoutPlan? plan;
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        WorkoutPlan ??= await context.WorkoutPlan.FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (WorkoutPlan is null)
-        {
-            NavigationManager.NavigateTo("notfound");
-        }
+        plan = await Db.WorkoutPlan.FirstOrDefaultAsync(x => x.Id == Id);
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task UpdateWorkoutPlan()
+    private async Task Save()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Attach(WorkoutPlan!).State = EntityState.Modified;
+        if (plan is null) return;
 
-        try
-        {
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!WorkoutPlanExists(WorkoutPlan!.Id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
-        }
-
-        NavigationManager.NavigateTo("/workoutplans");
-    }
-
-    private bool WorkoutPlanExists(int id)
-    {
-        using var context = DbFactory.CreateDbContext();
-        return context.WorkoutPlan.Any(e => e.Id == id);
+        Db.WorkoutPlan.Update(plan);
+        await Db.SaveChangesAsync();
+        Nav.NavigateTo("/workoutplans");
     }
 }

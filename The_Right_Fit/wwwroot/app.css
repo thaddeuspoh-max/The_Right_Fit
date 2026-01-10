@@ -284,6 +284,7 @@ h1, h2, h3 {
     .lp-btn:hover {
         filter: brightness(.95);
     }
+
 .lp-cta {
     margin-top: 28px; /* ? pushes button down */
 }
@@ -525,3 +526,4 @@ h1, h2, h3 {
         align-items: flex-start;
     }
 }
+    

@@ -1,64 +1,76 @@
-﻿@page "/workoutplans/details"
+﻿@page "/workoutplans/details/{Id:int}"
 @using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Data
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@inject The_Right_FitContext Db
+@inject NavigationManager Nav
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Workout Plan Details</PageTitle>
 
-<h1>Details</h1>
-
-<div>
-    <h2>WorkoutPlan</h2>
-    <hr />
-    @if (workoutplan is null)
-    {
-        <p><em>Loading...</em></p>
-    }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">UserId</dt>
-            <dd class="col-sm-10">@workoutplan.UserId</dd>
-            <dt class="col-sm-2">TrainerId</dt>
-            <dd class="col-sm-10">@workoutplan.TrainerId</dd>
-            <dt class="col-sm-2">PlanName</dt>
-            <dd class="col-sm-10">@workoutplan.PlanName</dd>
-            <dt class="col-sm-2">GoalType</dt>
-            <dd class="col-sm-10">@workoutplan.GoalType</dd>
-            <dt class="col-sm-2">DifficultyLevel</dt>
-            <dd class="col-sm-10">@workoutplan.DifficultyLevel</dd>
-            <dt class="col-sm-2">DurationWeeks</dt>
-            <dd class="col-sm-10">@workoutplan.DurationWeeks</dd>
-            <dt class="col-sm-2">DateCreated</dt>
-            <dd class="col-sm-10">@workoutplan.DateCreated</dd>
-            <dt class="col-sm-2">DateUpdated</dt>
-            <dd class="col-sm-10">@workoutplan.DateUpdated</dd>
-            <dt class="col-sm-2">CreatedBy</dt>
-            <dd class="col-sm-10">@workoutplan.CreatedBy</dd>
-            <dt class="col-sm-2">UpdatedBy</dt>
-            <dd class="col-sm-10">@workoutplan.UpdatedBy</dd>
-        </dl>
+<div class="wp">
+    <div class="wp-head">
         <div>
-            <a href="@($"/workoutplans/edit?id={workoutplan.Id}")">Edit</a> |
-            <a href="@($"/workoutplans")">Back to List</a>
+            <h1 class="wp-title">Plan Details</h1>
+            <div class="wp-sub">Full details of the selected plan.</div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <NavLink class="wp-newbtn" href="/workoutplans">Back</NavLink>
+            <NavLink class="wp-newbtn" href="@($"/workoutplans/edit/{Id}")">Edit</NavLink>
+        </div>
+    </div>
+
+    @if (plan == null)
+    {
+        <div class="wp-loading">Loading…</div>
+    }
+    else
+    {
+        <div class="wp-card" style="padding:18px;">
+            <div class="wp-cardtop">
+                <span class="wp-tag">@Safe(plan.GoalType, "General")</span>
+                <span class="wp-weeks">@plan.DurationWeeks weeks</span>
+            </div>
+
+            <div class="wp-name">@Safe(plan.PlanName, "Untitled Plan")</div>
+
+            <div class="wp-diff">
+                <span class="wp-diffdot @DiffClass(plan.DifficultyLevel)"></span>
+                @Safe(plan.DifficultyLevel, "Not set")
+            </div>
+
+            <div class="wp-desc" style="min-height:auto;">
+                <strong>UserId:</strong> @(plan.UserId?.ToString() ?? "—")<br />
+                <strong>TrainerId:</strong> @(plan.TrainerId?.ToString() ?? "—")
+            </div>
+
+            <div class="wp-cardbottom">
+                <div class="wp-actions">
+                    <NavLink class="wp-act" href="@($"/workoutplans/edit/{plan.Id}")">Edit</NavLink>
+                    <NavLink class="wp-act" href="@($"/workoutplans/delete/{plan.Id}")">Delete</NavLink>
+                </div>
+            </div>
         </div>
     }
 </div>
 
 @code {
-    private WorkoutPlan? workoutplan;
-
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    [Parameter] public int Id { get; set; }
+    private WorkoutPlan? plan;
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        workoutplan = await context.WorkoutPlan.FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (workoutplan is null)
-        {
-            NavigationManager.NavigateTo("notfound");
-        }
+        plan = await Db.WorkoutPlan.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id);
     }
+
+    private static string Safe(string? v, string fallback) =>
+        string.IsNullOrWhiteSpace(v) ? fallback : v;
+
+    private string DiffClass(string? d) => d switch
+    {
+        "Beginner" => "beginner",
+        "Intermediate" => "intermediate",
+        "Advanced" => "advanced",
+        _ => ""
+    };
 }

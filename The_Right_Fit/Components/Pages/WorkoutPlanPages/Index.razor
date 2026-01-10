@@ -1,45 +1,167 @@
 ﻿@page "/workoutplans"
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.QuickGrid
-@using The_Right_Fit.Domain
 @using The_Right_Fit.Data
-@implements IAsyncDisposable
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@using The_Right_Fit.Domain
+@inject The_Right_FitContext Db
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Workout Plans</PageTitle>
 
-<h1>Index</h1>
+<div class="wp">
 
-<p>
-    <a href="workoutplans/create">Create New</a>
-</p>
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Workout Plans</h1>
+            <div class="wp-sub">Choose a plan, stay consistent, get results.</div>
+        </div>
 
-<QuickGrid Class="table" Items="context.WorkoutPlan">
-    <PropertyColumn Property="workoutplan => workoutplan.UserId" />
-    <PropertyColumn Property="workoutplan => workoutplan.TrainerId" />
-    <PropertyColumn Property="workoutplan => workoutplan.PlanName" />
-    <PropertyColumn Property="workoutplan => workoutplan.GoalType" />
-    <PropertyColumn Property="workoutplan => workoutplan.DifficultyLevel" />
-    <PropertyColumn Property="workoutplan => workoutplan.DurationWeeks" />
-    <PropertyColumn Property="workoutplan => workoutplan.DateCreated" />
-    <PropertyColumn Property="workoutplan => workoutplan.DateUpdated" />
-    <PropertyColumn Property="workoutplan => workoutplan.CreatedBy" />
-    <PropertyColumn Property="workoutplan => workoutplan.UpdatedBy" />
+        <NavLink class="wp-newbtn" href="/workoutplans/create">
+            <span class="wp-plus">+</span>
+            New Plan
+        </NavLink>
+    </div>
 
-    <TemplateColumn Context="workoutplan">
-        <a href="@($"workoutplans/edit?id={workoutplan.Id}")">Edit</a> |
-        <a href="@($"workoutplans/details?id={workoutplan.Id}")">Details</a> |
-        <a href="@($"workoutplans/delete?id={workoutplan.Id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
+    <!-- FILTERS -->
+    <div class="wp-filters">
+        <div class="wp-filter">
+            <div class="wp-label">Difficulty</div>
+            <select class="wp-select"
+                    @bind="difficulty"
+                    @bind:after="OnFiltersChanged">
+                <option value="">All</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+        </div>
 
-@code {
-    private The_Right_FitContext context = default!;
+        <div class="wp-filter">
+            <div class="wp-label">Duration</div>
+            <select class="wp-select"
+                    @bind="weeks"
+                    @bind:after="OnFiltersChanged">
+                <option value="">All</option>
+                <option value="4">4 Weeks</option>
+                <option value="6">6 Weeks</option>
+                <option value="8">8 Weeks</option>
+                <option value="12">12 Weeks</option>
+            </select>
+        </div>
 
-    protected override void OnInitialized()
+        <div class="wp-filter">
+            <div class="wp-label">Search</div>
+            <div class="wp-searchbox">
+                <span class="wp-searchicon">🔍</span>
+                <input class="wp-input"
+                       placeholder="Search by plan name..."
+                       @bind="search"
+                       @bind:event="oninput"
+                       @bind:after="OnFiltersChanged" />
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    @if (loading)
     {
-        context = DbFactory.CreateDbContext();
+        <div class="wp-loading">Loading workout plans…</div>
+    }
+    else if (plans.Count == 0)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">No workout plans found</div>
+            <div class="wp-empty-sub">Try adjusting filters or create a new plan.</div>
+        </div>
+    }
+    else
+    {
+        <div class="wp-grid">
+            @foreach (var p in plans)
+            {
+                <div class="wp-card">
+
+                    <div class="wp-cardtop">
+                        <span class="wp-tag">@Safe(p.GoalType, "General")</span>
+                        <span class="wp-weeks">@p.DurationWeeks Weeks</span>
+                    </div>
+
+                    <div class="wp-name">@Safe(p.PlanName, "Untitled Plan")</div>
+
+                    <div class="wp-diff">
+                        <span class="wp-diffdot @DiffClass(p.DifficultyLevel)"></span>
+                        @Safe(p.DifficultyLevel, "Not set")
+                    </div>
+
+                    <div class="wp-desc">
+                        @($"{Safe(p.GoalType, "Goal")} • {Safe(p.DifficultyLevel, "Level")} • {p.DurationWeeks} weeks")
+                    </div>
+
+                    <div class="wp-cardbottom">
+                        <!-- ✅ FIXED href: no mixed markup/C# -->
+                        <NavLink class="wp-start" href="@($"/workoutplans/details/{p.Id}")">
+                            View / Start Plan
+                        </NavLink>
+
+                        <div class="wp-actions">
+                            <!-- ✅ FIXED href -->
+                            <NavLink class="wp-act" href="@($"/workoutplans/edit/{p.Id}")">Edit</NavLink>
+                            <NavLink class="wp-act" href="@($"/workoutplans/delete/{p.Id}")">Delete</NavLink>
+                        </div>
+                    </div>
+
+                </div>
+            }
+        </div>
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+</div>
+
+@code {
+    private bool loading = true;
+    private List<WorkoutPlan> plans = new();
+
+    private string? difficulty = "";
+    private string? weeks = "";
+    private string search = "";
+
+    protected override async Task OnInitializedAsync()
+        => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+
+        IQueryable<WorkoutPlan> q = Db.WorkoutPlan.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(difficulty))
+            q = q.Where(x => x.DifficultyLevel == difficulty);
+
+        if (!string.IsNullOrWhiteSpace(weeks) && int.TryParse(weeks, out var w))
+            q = q.Where(x => x.DurationWeeks == w);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+            q = q.Where(x => x.PlanName != null && EF.Functions.Like(x.PlanName, $"%{s}%"));
+        }
+
+        plans = await q.OrderByDescending(x => x.Id).ToListAsync();
+
+        loading = false;
+    }
+
+    // ✅ Works with @bind:after (no duplicate onchange)
+    private async Task OnFiltersChanged()
+        => await LoadAsync();
+
+    private static string Safe(string? v, string fallback)
+        => string.IsNullOrWhiteSpace(v) ? fallback : v;
+
+    private static string DiffClass(string? d) => d switch
+    {
+        "Beginner" => "beginner",
+        "Intermediate" => "intermediate",
+        "Advanced" => "advanced",
+        _ => ""
+    };
 }

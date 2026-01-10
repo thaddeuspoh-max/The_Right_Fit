@@ -1,0 +1,168 @@
+﻿@page "/dashboard"
+
+<PageTitle>Client Dashboard</PageTitle>
+
+<div class="dash">
+
+    <!-- Header -->
+    <div class="dash-header">
+        <div>
+            <div class="dash-kicker">CLIENT DASHBOARD</div>
+            <h1 class="dash-title">Welcome back 👋</h1>
+            <p class="dash-sub">Here’s your overview for today.</p>
+        </div>
+
+        <!-- BIG BUTTONS (not links) -->
+        <div class="dash-header-actions">
+            <NavLink class="dash-btn-link" href="/workoutlogs/create">
+                <button type="button" class="dash-btn dash-btn-primary">
+                    + Log Workout
+                </button>
+            </NavLink>
+
+            <NavLink class="dash-btn-link" href="/dietlogs/create">
+                <button type="button" class="dash-btn dash-btn-secondary">
+                    + Log Meal
+                </button>
+            </NavLink>
+        </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="dash-stats">
+        <div class="dash-stat">
+            <div class="dash-stat-label">Streak</div>
+            <div class="dash-stat-value">7 days</div>
+            <div class="dash-stat-note">Keep it going</div>
+        </div>
+
+        <div class="dash-stat">
+            <div class="dash-stat-label">Calories</div>
+            <div class="dash-stat-value">1,820</div>
+            <div class="dash-stat-note">Target: 2,100</div>
+        </div>
+
+        <div class="dash-stat">
+            <div class="dash-stat-label">Protein</div>
+            <div class="dash-stat-value">118g</div>
+            <div class="dash-stat-note">Target: 130g</div>
+        </div>
+
+        <div class="dash-stat">
+            <div class="dash-stat-label">Workouts</div>
+            <div class="dash-stat-value">3 / week</div>
+            <div class="dash-stat-note">This week</div>
+        </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="dash-grid">
+
+        <!-- Today's Plan -->
+        <div class="dash-card">
+            <div class="dash-card-head">
+                <div class="dash-h2">Today’s Plan</div>
+                <div class="dash-pill">Upper Body</div>
+            </div>
+
+            <div class="dash-plan">
+                <div class="dash-plan-item">
+                    <div class="dash-plan-title">Bench Press</div>
+                    <div class="dash-plan-meta">4 × 8 • RPE 7</div>
+                </div>
+
+                <div class="dash-plan-item">
+                    <div class="dash-plan-title">Rows</div>
+                    <div class="dash-plan-meta">4 × 10 • Controlled</div>
+                </div>
+
+                <div class="dash-plan-item">
+                    <div class="dash-plan-title">Shoulder Press</div>
+                    <div class="dash-plan-meta">3 × 8 • Moderate</div>
+                </div>
+            </div>
+
+            <div class="dash-card-actions">
+                <NavLink class="dash-btn-link" href="/workoutplans">
+                    <button type="button" class="dash-btn">
+                        View Workout Plans
+                    </button>
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="dash-card">
+            <div class="dash-card-head">
+                <div class="dash-h2">Progress</div>
+                <div class="dash-pill dash-pill-soft">This Week</div>
+            </div>
+
+            <div class="dash-progress-block">
+                <div class="dash-progress-row">
+                    <div class="dash-progress-label">Workouts completed</div>
+                    <div class="dash-progress-value">3 / 5</div>
+                </div>
+                <div class="dash-bar">
+                    <div class="dash-bar-fill" style="width:60%"></div>
+                </div>
+            </div>
+
+            <div class="dash-progress-block">
+                <div class="dash-progress-row">
+                    <div class="dash-progress-label">Protein goal</div>
+                    <div class="dash-progress-value">118 / 130g</div>
+                </div>
+                <div class="dash-bar">
+                    <div class="dash-bar-fill" style="width:90%"></div>
+                </div>
+            </div>
+
+            <div class="dash-progress-block">
+                <div class="dash-progress-row">
+                    <div class="dash-progress-label">Calories</div>
+                    <div class="dash-progress-value">1,820 / 2,100</div>
+                </div>
+                <div class="dash-bar">
+                    <div class="dash-bar-fill" style="width:86%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity (NO Session row) -->
+        <div class="dash-card dash-span-2">
+            <div class="dash-card-head">
+                <div class="dash-h2">Recent Activity</div>
+
+                <NavLink class="dash-btn-link" href="/activity">
+                    <button type="button" class="dash-btn">
+                        View All
+                    </button>
+                </NavLink>
+            </div>
+
+            <div class="dash-activity">
+                <div class="dash-activity-item">
+                    <div class="dash-dot"></div>
+                    <div>
+                        <div class="dash-activity-title">Workout</div>
+                        <div class="dash-activity-sub">Leg Day – Hypertrophy • Squats, Lunges, Calf Raises</div>
+                    </div>
+                    <div class="dash-activity-tag">Completed</div>
+                </div>
+
+                <div class="dash-activity-item">
+                    <div class="dash-dot" style="background: rgba(16,185,129,1); box-shadow: 0 0 0 6px rgba(16,185,129,.14);"></div>
+                    <div>
+                        <div class="dash-activity-title">Meal Logged</div>
+                        <div class="dash-activity-sub">Breakfast • Oatmeal, Eggs, Berries</div>
+                    </div>
+                    <div class="dash-activity-tag" style="background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.2); color: rgba(5,150,105,1);">
+                        Logged
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
