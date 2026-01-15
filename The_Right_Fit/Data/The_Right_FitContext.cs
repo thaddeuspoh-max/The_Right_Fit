@@ -11,7 +11,7 @@ namespace The_Right_Fit.Data
         public DbSet<The_Right_Fit.Domain.DietLog> DietLog { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.Exercise> Exercise { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.FoodItems> FoodItems { get; set; } = default!;
-        public DbSet<The_Right_Fit.Domain.UserProfile> UserProfile { get; set; } = default!;
+       
         public DbSet<The_Right_Fit.Domain.WorkoutLog> WorkoutLog { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.WorkoutLogExercise> WorkoutLogExercise { get; set; } = default!;
         public DbSet<The_Right_Fit.Domain.WorkoutPlan> WorkoutPlan { get; set; } = default!;

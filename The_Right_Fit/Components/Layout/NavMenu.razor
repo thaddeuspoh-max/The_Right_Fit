@@ -3,68 +3,87 @@
 
 <div class="trf-topnav">
 
-    <!-- LOGO / BRAND: always goes to landing page -->
+    <!-- LOGO / BRAND -->
     <a class="trf-brand" href="/">
         THE RIGHT FIT
     </a>
 
-    <!-- MIDDLE LINKS -->
+    <!-- CENTER LINKS -->
     <div class="trf-topnav-links">
-
         <AuthorizeView Context="auth">
             <Authorized>
-                <!-- Logged in: show Dashboard instead of Home -->
+
                 <NavLink class="trf-toplink" href="/dashboard" Match="NavLinkMatch.Prefix">
                     Dashboard
                 </NavLink>
 
-                <!-- Optional: keep your other links if you want -->
-                <NavLink class="trf-toplink" href="/workoutplans" Match="NavLinkMatch.Prefix">Workout Plans</NavLink>
-                <NavLink class="trf-toplink" href="/exercises" Match="NavLinkMatch.Prefix">Exercises</NavLink>
-                <NavLink class="trf-toplink" href="/workoutlogs" Match="NavLinkMatch.Prefix">Workout Logs</NavLink>
-                <NavLink class="trf-toplink" href="/dietlogs" Match="NavLinkMatch.Prefix">Diet Logs</NavLink>
+                <NavLink class="trf-toplink" href="/workoutplans" Match="NavLinkMatch.Prefix">
+                    Workout Plans
+                </NavLink>
+
+                <NavLink class="trf-toplink" href="/exercises" Match="NavLinkMatch.Prefix">
+                    Exercises
+                </NavLink>
+
+                <NavLink class="trf-toplink" href="/workoutlogs" Match="NavLinkMatch.Prefix">
+                    Workout Logs
+                </NavLink>
+
+                <NavLink class="trf-toplink" href="/dietlogs" Match="NavLinkMatch.Prefix">
+                    Diet Logs
+                </NavLink>
 
                 <AuthorizeView Roles="Administrator">
-                    <Authorized>
-                        <NavLink class="trf-toplink" href="/fooditems" Match="NavLinkMatch.Prefix">Food Items</NavLink>
-                    </Authorized>
+                    <NavLink class="trf-toplink" href="/fooditems" Match="NavLinkMatch.Prefix">
+                        Food Items
+                    </NavLink>
                 </AuthorizeView>
+
             </Authorized>
 
             <NotAuthorized>
-                <!-- Not logged in: show Home -->
                 <NavLink class="trf-toplink" href="/" Match="NavLinkMatch.All">
                     Home
                 </NavLink>
 
-                <!-- Optional: landing page anchors -->
                 <a class="trf-toplink" href="/#features">Features</a>
                 <a class="trf-toplink" href="/#how">How it works</a>
             </NotAuthorized>
         </AuthorizeView>
-
     </div>
 
-    <!-- RIGHT SIDE AUTH -->
+    <!-- RIGHT SIDE (AUTH) -->
     <div class="trf-topnav-auth">
         <AuthorizeView Context="auth">
             <Authorized>
-                <NavLink class="trf-toplink trf-user" href="Account/Manage">
+
+                <!-- Your custom profile page -->
+                <NavLink class="trf-toplink trf-user" href="/profile" Match="NavLinkMatch.All">
                     @auth.User.Identity?.Name
                 </NavLink>
 
-                <form class="trf-logout-form" action="/Account/Logout" method="post" @formname="logoutForm">
+                <!-- Default Identity manage page (change password, email, etc.) -->
+                <NavLink class="trf-toplink" href="/Account/Manage" Match="NavLinkMatch.Prefix">
+                    Settings
+                </NavLink>
+
+                <!-- Logout (needs @formname for SSR enhanced forms) -->
+                <form class="trf-logout-form"
+                      action="/Account/Logout"
+                      method="post"
+                      @formname="logoutForm">
                     <AntiforgeryToken />
                     <input type="hidden"
                            name="returnUrl"
                            value="@NavigationManager.ToBaseRelativePath(NavigationManager.Uri)" />
                     <button type="submit" class="trf-topbtn">Logout</button>
                 </form>
+
             </Authorized>
 
             <NotAuthorized>
-                <NavLink class="trf-toplink" href="Account/Login">Login</NavLink>
-                <NavLink class="trf-toplink trf-cta" href="Account/Register">Get Started</NavLink>
+                <NavLink class="trf-toplink" href="/Account/Login">Login</NavLink>
+                <NavLink class="trf-toplink trf-cta" href="/Account/Register">Get Started</NavLink>
             </NotAuthorized>
         </AuthorizeView>
     </div>

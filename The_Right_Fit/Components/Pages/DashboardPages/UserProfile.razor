@@ -1,0 +1,112 @@
+﻿@page "/profile"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using The_Right_Fit.Data
+@inject NavigationManager NavigationManager
+
+@inject UserManager<The_Right_FitUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>My Profile</PageTitle>
+
+<h1>My Profile</h1>
+
+@if (user is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <EditForm Model="form"
+              OnValidSubmit="Save"
+              FormName="profileForm"
+              Enhance>
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>First Name</label>
+            <InputText class="form-control" @bind-Value="form.FirstName" />
+        </div>
+
+        <div class="mb-3">
+            <label>Last Name</label>
+            <InputText class="form-control" @bind-Value="form.LastName" />
+        </div>
+
+        <div class="mb-3">
+            <label>Height (cm)</label>
+            <InputNumber class="form-control" @bind-Value="form.HeightCm" />
+        </div>
+
+        <div class="mb-3">
+            <label>Weight (kg)</label>
+            <InputNumber class="form-control" @bind-Value="form.WeightKg" />
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="alert alert-success mt-3">@message</div>
+        }
+    </EditForm>
+}
+
+@code {
+    private The_Right_FitUser? user;
+    private ProfileForm form = new();
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var principal = authState.User;
+
+        if (!principal.Identity?.IsAuthenticated ?? true)
+            return;
+
+        user = await UserManager.GetUserAsync(principal);
+
+        if (user is null) return;
+
+        // 🔥 THIS IS WHERE THE ERROR WAS
+        form = new ProfileForm
+        {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            HeightCm = user.HeightCm ?? 0,   // FIX
+            WeightKg = user.WeightKg ?? 0    // FIX
+        };
+    }
+
+    private async Task Save()
+    {
+        if (user is null) return;
+
+        user.FirstName = form.FirstName;
+        user.LastName = form.LastName;
+        user.HeightCm = form.HeightCm;
+        user.WeightKg = form.WeightKg;
+
+        var result = await UserManager.UpdateAsync(user);
+
+        if (result.Succeeded)
+        {
+            // 🔥 Redirect to home (or dashboard)
+            NavigationManager.NavigateTo("/");
+            // or: NavigationManager.NavigateTo("/dashboard");
+        }
+    }
+
+
+    // 👇 THIS is the "form" you were asking about
+    private class ProfileForm
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public double HeightCm { get; set; }
+        public double WeightKg { get; set; }
+    }
+}

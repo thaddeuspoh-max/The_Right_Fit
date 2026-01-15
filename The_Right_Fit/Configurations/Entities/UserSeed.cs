@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using The_Right_Fit.Data;
-using The_Right_Fit.Domain;
 
 namespace The_Right_Fit.Configurations.Entities
 {
@@ -14,10 +12,6 @@ namespace The_Right_Fit.Configurations.Entities
             var hasher = new PasswordHasher<The_Right_FitUser>();
 
             builder.HasData(
-
-                // ============================
-                // ADMIN USER
-                // ============================
                 new The_Right_FitUser
                 {
                     Id = "3781efa7-66dc-47f0-860f-e506d04102e4",
@@ -33,23 +27,19 @@ namespace The_Right_Fit.Configurations.Entities
                     PasswordHash = hasher.HashPassword(null, "Admin123!"),
                     EmailConfirmed = true
                 },
-
-                // ============================
-                // TRAINER USER
-                // ============================
                 new The_Right_FitUser
                 {
-                    Id = "ee111111-2222-3333-4444-555555555555",
-                    Email = "trainer@therightfit.com",
-                    NormalizedEmail = "TRAINER@THERIGHTFIT.COM",
+                    Id = "99999999-8888-7777-6666-555555555555",
+                    Email = "user@therightfit.com",
+                    NormalizedEmail = "USER@THERIGHTFIT.COM",
 
-                    FirstName = "John",
-                    LastName = "Trainer",
+                    FirstName = "Jane",
+                    LastName = "User",
 
-                    UserName = "trainer@therightfit.com",
-                    NormalizedUserName = "TRAINER@THERIGHTFIT.COM",
+                    UserName = "user@therightfit.com",
+                    NormalizedUserName = "USER@THERIGHTFIT.COM",
 
-                    PasswordHash = hasher.HashPassword(null, "Trainer123!"),
+                    PasswordHash = hasher.HashPassword(null, "User123!"),
                     EmailConfirmed = true
                 }
             );

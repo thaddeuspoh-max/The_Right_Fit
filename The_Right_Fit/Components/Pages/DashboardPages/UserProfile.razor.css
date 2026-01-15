@@ -1,0 +1,325 @@
+.dash {
+    width: 100%;
+    max-width: 1200px;
+    margin: 24px auto 70px;
+    padding: 0 18px;
+}
+
+.dash-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+}
+
+.dash-kicker {
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .16em;
+    color: rgba(15, 23, 42, .55);
+}
+
+.dash-title {
+    margin: 8px 0 0;
+    font-size: 40px;
+    font-weight: 950;
+    letter-spacing: -0.03em;
+}
+
+.dash-sub {
+    margin: 8px 0 0;
+    color: rgba(15, 23, 42, .70);
+    font-weight: 650;
+}
+
+.dash-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Buttons */
+.dash-btn {
+    text-decoration: none;
+    font-weight: 900;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(15,23,42,.04);
+    color: rgba(15,23,42,.90);
+    transition: transform .15s ease, background .15s ease;
+}
+
+    .dash-btn:hover {
+        background: rgba(15,23,42,.07);
+        transform: translateY(-1px);
+    }
+
+.dash-btn-primary {
+    background: var(--trf-primary);
+    color: #fff;
+    border-color: rgba(59,130,246,.35);
+}
+
+    .dash-btn-primary:hover {
+        filter: brightness(.95);
+    }
+
+/* Secondary button style */
+.dash-btn-secondary {
+    background: rgba(59,130,246,.10);
+    color: rgba(29,78,216,.95);
+    border-color: rgba(59,130,246,.22);
+}
+
+    .dash-btn-secondary:hover {
+        background: rgba(59,130,246,.14);
+    }
+
+/* Stats */
+.dash-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.dash-stat {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.10);
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 16px 44px rgba(2,6,23,.07);
+}
+
+.dash-stat-label {
+    font-size: 12px;
+    font-weight: 900;
+    color: rgba(15,23,42,.55);
+    letter-spacing: .04em;
+}
+
+.dash-stat-value {
+    margin-top: 6px;
+    font-size: 22px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+}
+
+.dash-stat-note {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(15,23,42,.65);
+}
+
+/* Grid */
+.dash-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.dash-card {
+    background: #fff;
+    border: 1px solid rgba(15,23,42,.10);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 18px 52px rgba(2,6,23,.08);
+}
+
+.dash-span-2 {
+    grid-column: span 2;
+}
+
+.dash-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.dash-h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+}
+
+.dash-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    background: rgba(59,130,246,.12);
+    border: 1px solid rgba(59,130,246,.22);
+    color: #1d4ed8;
+}
+
+.dash-pill-soft {
+    background: rgba(15,23,42,.05);
+    border: 1px solid rgba(15,23,42,.08);
+    color: rgba(15,23,42,.75);
+}
+
+/* Plan */
+.dash-plan {
+    display: grid;
+    gap: 10px;
+}
+
+.dash-plan-item {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(15,23,42,.04);
+    border: 1px solid rgba(15,23,42,.07);
+}
+
+.dash-plan-title {
+    font-weight: 950;
+}
+
+.dash-plan-meta {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(15,23,42,.70);
+}
+
+.dash-card-actions {
+    margin-top: 12px;
+}
+
+/* Progress */
+.dash-progress-block {
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(15,23,42,.04);
+    border: 1px solid rgba(15,23,42,.07);
+    margin-bottom: 10px;
+}
+
+.dash-progress-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-weight: 850;
+    color: rgba(15,23,42,.82);
+}
+
+.dash-progress-label {
+    font-size: 13px;
+}
+
+.dash-progress-value {
+    font-size: 13px;
+    color: rgba(15,23,42,.65);
+}
+
+.dash-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(15,23,42,.10);
+    overflow: hidden;
+    margin-top: 10px;
+}
+
+.dash-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--trf-primary);
+}
+
+/* Activity */
+.dash-activity {
+    display: grid;
+    gap: 10px;
+}
+
+.dash-activity-item {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(15,23,42,.04);
+    border: 1px solid rgba(15,23,42,.07);
+}
+
+.dash-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--trf-primary);
+    box-shadow: 0 0 0 6px rgba(59,130,246,.12);
+}
+
+.dash-activity-title {
+    font-weight: 950;
+}
+
+.dash-activity-sub {
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(15,23,42,.70);
+}
+
+.dash-activity-tag {
+    font-size: 12px;
+    font-weight: 900;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(59,130,246,.12);
+    border: 1px solid rgba(59,130,246,.20);
+    color: #1d4ed8;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+    .dash-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dash-stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .dash-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dash-span-2 {
+        grid-column: span 1;
+    }
+}
+
+/* =========================================================
+   FIX: Make NavLink NOT look like a hyperlink
+   (THIS is what stops underline + blue visited styles)
+   ========================================================= */
+
+.dash-btn-link {
+    text-decoration: none !important;
+    display: inline-flex;
+}
+
+    .dash-btn-link:link,
+    .dash-btn-link:visited,
+    .dash-btn-link:hover,
+    .dash-btn-link:active {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+/* Ensure the <button> behaves like a button */
+.dash-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
