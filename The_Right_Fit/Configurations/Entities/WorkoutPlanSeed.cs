@@ -13,7 +13,7 @@ namespace The_Right_Fit.Configurations.Entities
                 {
                     Id = 1,
                     UserId = null,   // Public Plan
-                    TrainerId = null,
+                    
                     PlanName = "Beginner Full Body Program",
                     GoalType = "General Fitness",
                     DifficultyLevel = "Beginner",
@@ -27,7 +27,7 @@ namespace The_Right_Fit.Configurations.Entities
                 {
                     Id = 2,
                     UserId = null,
-                    TrainerId = null,
+                    
                     PlanName = "Fat Loss Home Workout Plan",
                     GoalType = "Weight Loss",
                     DifficultyLevel = "Beginner",
@@ -41,7 +41,7 @@ namespace The_Right_Fit.Configurations.Entities
                 {
                     Id = 3,
                     UserId = null,
-                    TrainerId = null,
+                    
                     PlanName = "Muscle Gain Strength Program",
                     GoalType = "Muscle Gain",
                     DifficultyLevel = "Intermediate",
@@ -55,7 +55,7 @@ namespace The_Right_Fit.Configurations.Entities
                 {
                     Id = 4,
                     UserId = null,
-                    TrainerId = null,
+                    
                     PlanName = "Upper / Lower Split",
                     GoalType = "Strength Training",
                     DifficultyLevel = "Intermediate",
@@ -69,7 +69,7 @@ namespace The_Right_Fit.Configurations.Entities
                 {
                     Id = 5,
                     UserId = null,
-                    TrainerId = null,
+                    
                     PlanName = "Push Pull Legs (PPL) Program",
                     GoalType = "Muscle Gain",
                     DifficultyLevel = "Advanced",

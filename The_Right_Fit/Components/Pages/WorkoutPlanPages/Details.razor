@@ -1,4 +1,6 @@
 ﻿@page "/workoutplans/details/{Id:int}"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Data
 @using The_Right_Fit.Domain
@@ -41,7 +43,7 @@
 
             <div class="wp-desc" style="min-height:auto;">
                 <strong>UserId:</strong> @(plan.UserId?.ToString() ?? "—")<br />
-                <strong>TrainerId:</strong> @(plan.TrainerId?.ToString() ?? "—")
+                
             </div>
 
             <div class="wp-cardbottom">

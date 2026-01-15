@@ -2,13 +2,17 @@
 {
     public class WorkoutPlan : BaseDomainModel
     {
-        public int? UserId { get; set; }       // ❗ now nullable
-        public int? TrainerId { get; set; }    // still optional
+        // 🔐 Owner of the plan
+        // null = global plan (admin/trainer)
+        // not null = user-created plan
+        public int? OwnerUserId { get; set; }
+
+        // (optional assignment fields – can stay)
+        public int? UserId { get; set; }
 
         public string? PlanName { get; set; }
         public string? GoalType { get; set; }
         public string? DifficultyLevel { get; set; }
         public int DurationWeeks { get; set; }
     }
-
 }

@@ -1,4 +1,6 @@
 ﻿@page "/workoutplans"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Data
 @using The_Right_Fit.Domain
@@ -25,9 +27,7 @@
     <div class="wp-filters">
         <div class="wp-filter">
             <div class="wp-label">Difficulty</div>
-            <select class="wp-select"
-                    @bind="difficulty"
-                    @bind:after="OnFiltersChanged">
+            <select class="wp-select" @bind="difficulty">
                 <option value="">All</option>
                 <option value="Beginner">Beginner</option>
                 <option value="Intermediate">Intermediate</option>
@@ -37,9 +37,7 @@
 
         <div class="wp-filter">
             <div class="wp-label">Duration</div>
-            <select class="wp-select"
-                    @bind="weeks"
-                    @bind:after="OnFiltersChanged">
+            <select class="wp-select" @bind="weeks">
                 <option value="">All</option>
                 <option value="4">4 Weeks</option>
                 <option value="6">6 Weeks</option>
@@ -55,8 +53,7 @@
                 <input class="wp-input"
                        placeholder="Search by plan name..."
                        @bind="search"
-                       @bind:event="oninput"
-                       @bind:after="OnFiltersChanged" />
+                       @bind:event="oninput" />
             </div>
         </div>
     </div>
@@ -66,7 +63,7 @@
     {
         <div class="wp-loading">Loading workout plans…</div>
     }
-    else if (plans.Count == 0)
+    else if (FilteredPlans.Count == 0)
     {
         <div class="wp-empty">
             <div class="wp-empty-title">No workout plans found</div>
@@ -76,7 +73,7 @@
     else
     {
         <div class="wp-grid">
-            @foreach (var p in plans)
+            @foreach (var p in FilteredPlans)
             {
                 <div class="wp-card">
 
@@ -97,13 +94,11 @@
                     </div>
 
                     <div class="wp-cardbottom">
-                        <!-- ✅ FIXED href: no mixed markup/C# -->
                         <NavLink class="wp-start" href="@($"/workoutplans/details/{p.Id}")">
                             View / Start Plan
                         </NavLink>
 
                         <div class="wp-actions">
-                            <!-- ✅ FIXED href -->
                             <NavLink class="wp-act" href="@($"/workoutplans/edit/{p.Id}")">Edit</NavLink>
                             <NavLink class="wp-act" href="@($"/workoutplans/delete/{p.Id}")">Delete</NavLink>
                         </div>
@@ -118,46 +113,60 @@
 
 @code {
     private bool loading = true;
-    private List<WorkoutPlan> plans = new();
+
+    // Load once from DB, then filter in memory (guaranteed to work)
+    private List<WorkoutPlan> allPlans = new();
 
     private string? difficulty = "";
     private string? weeks = "";
     private string search = "";
 
     protected override async Task OnInitializedAsync()
-        => await LoadAsync();
-
-    private async Task LoadAsync()
     {
         loading = true;
-
-        IQueryable<WorkoutPlan> q = Db.WorkoutPlan.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(difficulty))
-            q = q.Where(x => x.DifficultyLevel == difficulty);
-
-        if (!string.IsNullOrWhiteSpace(weeks) && int.TryParse(weeks, out var w))
-            q = q.Where(x => x.DurationWeeks == w);
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim();
-            q = q.Where(x => x.PlanName != null && EF.Functions.Like(x.PlanName, $"%{s}%"));
-        }
-
-        plans = await q.OrderByDescending(x => x.Id).ToListAsync();
-
+        allPlans = await Db.WorkoutPlan.AsNoTracking()
+            .OrderByDescending(x => x.Id)
+            .ToListAsync();
         loading = false;
     }
 
-    // ✅ Works with @bind:after (no duplicate onchange)
-    private async Task OnFiltersChanged()
-        => await LoadAsync();
+    // In-memory filtering (case-insensitive, trims, handles nulls)
+    private List<WorkoutPlan> FilteredPlans
+    {
+        get
+        {
+            IEnumerable<WorkoutPlan> q = allPlans;
+
+            if (!string.IsNullOrWhiteSpace(difficulty))
+            {
+                var d = difficulty.Trim();
+                q = q.Where(x => (x.DifficultyLevel ?? "").Trim()
+                    .Equals(d, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(weeks) && int.TryParse(weeks, out var w))
+            {
+                q = q.Where(x => x.DurationWeeks == w);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(x =>
+                    (x.PlanName ?? "").Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                    (x.GoalType ?? "").Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                    (x.DifficultyLevel ?? "").Contains(s, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+
+            return q.ToList();
+        }
+    }
 
     private static string Safe(string? v, string fallback)
         => string.IsNullOrWhiteSpace(v) ? fallback : v;
 
-    private static string DiffClass(string? d) => d switch
+    private static string DiffClass(string? d) => d?.Trim() switch
     {
         "Beginner" => "beginner",
         "Intermediate" => "intermediate",
