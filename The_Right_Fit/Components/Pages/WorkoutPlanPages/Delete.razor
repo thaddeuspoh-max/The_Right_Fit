@@ -1,7 +1,10 @@
 ﻿@page "/workoutplans/delete/{Id:int}"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Data
 @using The_Right_Fit.Domain
+
 @inject The_Right_FitContext Db
 @inject NavigationManager Nav
 
@@ -17,30 +20,46 @@
         <NavLink class="wp-newbtn" href="/workoutplans">Back</NavLink>
     </div>
 
-    @if (plan == null)
+    @if (isLoading)
     {
         <div class="wp-loading">Loading…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot delete</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else if (plan == null)
+    {
+        <div class="wp-loading">Plan not found.</div>
     }
     else
     {
         <div class="wp-card" style="padding:18px;">
-            <div class="wp-name" style="margin:0;">@Safe(plan.PlanName, "Untitled Plan")</div>
+            <div class="wp-name">@Safe(plan.PlanName, "Untitled Plan")</div>
 
-            <div class="wp-desc" style="min-height:auto;">
+            <div class="wp-desc">
                 <div><strong>Goal:</strong> @Safe(plan.GoalType, "—")</div>
                 <div><strong>Difficulty:</strong> @Safe(plan.DifficultyLevel, "—")</div>
                 <div><strong>Duration:</strong> @plan.DurationWeeks weeks</div>
             </div>
 
-            <div style="display:flex; gap:10px; margin-top:16px;">
-                <button class="wp-newbtn"
-                        style="background:#ef4444; border-color:#ef4444;"
-                        @onclick="ConfirmDelete">
+            <div class="wp-dangerbox">
+                <div class="wp-danger-title">Warning</div>
+                <div class="wp-danger-sub">
+                    Deleting this plan will permanently remove it and its linked exercises.
+                </div>
+            </div>
+
+            <div class="wp-actions">
+                <button class="wp-newbtn wp-btn-danger" @onclick="ConfirmDelete">
                     Delete
                 </button>
 
-                <button class="wp-newbtn"
-                        style="background:rgba(15,23,42,.06); color:#0f172a; border-color:rgba(15,23,42,.10);"
+                <button class="wp-newbtn wp-btn-secondary"
+                        type="button"
                         @onclick="@(() => Nav.NavigateTo("/workoutplans"))">
                     Cancel
                 </button>
@@ -51,19 +70,37 @@
 
 @code {
     [Parameter] public int Id { get; set; }
+
     private WorkoutPlan? plan;
+    private bool isLoading = true;
+    private string? error;
 
     protected override async Task OnInitializedAsync()
     {
+        isLoading = true;
+
         plan = await Db.WorkoutPlan.FirstOrDefaultAsync(x => x.Id == Id);
+        if (plan == null)
+            error = "Workout plan not found.";
+
+        isLoading = false;
     }
 
     private async Task ConfirmDelete()
     {
         if (plan is null) return;
 
+        // Remove join table rows first (avoid FK constraint issues)
+        var links = await Db.WorkoutPlanExercise
+            .Where(x => x.WorkoutPlanId == plan.Id)
+            .ToListAsync();
+
+        if (links.Any())
+            Db.WorkoutPlanExercise.RemoveRange(links);
+
         Db.WorkoutPlan.Remove(plan);
         await Db.SaveChangesAsync();
+
         Nav.NavigateTo("/workoutplans");
     }
 

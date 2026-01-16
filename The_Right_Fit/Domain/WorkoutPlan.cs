@@ -6,7 +6,7 @@
         // null = global plan (admin/trainer)
         // not null = user-created plan
         public int? OwnerUserId { get; set; }
-
+        public string? OwnerIdentityUserId { get; set; }
         // (optional assignment fields – can stay)
         public int? UserId { get; set; }
 

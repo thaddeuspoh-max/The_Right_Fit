@@ -1,10 +1,14 @@
 ﻿@page "/workoutplans"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Data
 @using The_Right_Fit.Domain
 @inject The_Right_FitContext Db
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
 <PageTitle>Workout Plans</PageTitle>
 
@@ -114,28 +118,59 @@
 @code {
     private bool loading = true;
 
-    // Load once from DB, then filter in memory (guaranteed to work)
     private List<WorkoutPlan> allPlans = new();
 
     private string? difficulty = "";
     private string? weeks = "";
     private string search = "";
 
+    // Auth
+    private string? identityUserId;
+    private bool isAdmin;
+
     protected override async Task OnInitializedAsync()
     {
         loading = true;
+
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Identity/Account/Login", true);
+            return;
+        }
+
+        identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        isAdmin = user.IsInRole("Administrator");
+
         allPlans = await Db.WorkoutPlan.AsNoTracking()
             .OrderByDescending(x => x.Id)
             .ToListAsync();
+
         loading = false;
     }
 
-    // In-memory filtering (case-insensitive, trims, handles nulls)
     private List<WorkoutPlan> FilteredPlans
     {
         get
         {
             IEnumerable<WorkoutPlan> q = allPlans;
+
+            // ✅ Hide personalised plans from Admin:
+            // Admin sees ONLY library/public plans (OwnerIdentityUserId null/empty)
+            if (isAdmin)
+            {
+                q = q.Where(x => string.IsNullOrWhiteSpace(x.OwnerIdentityUserId));
+            }
+            else
+            {
+                // Normal user sees library + their own personalised plans
+                q = q.Where(x =>
+                    string.IsNullOrWhiteSpace(x.OwnerIdentityUserId) ||
+                    x.OwnerIdentityUserId == identityUserId
+                );
+            }
 
             if (!string.IsNullOrWhiteSpace(difficulty))
             {

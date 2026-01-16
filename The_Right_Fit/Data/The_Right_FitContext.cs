@@ -22,7 +22,7 @@ namespace The_Right_Fit.Data
             builder.ApplyConfiguration(new RoleSeed());        // Roles: Admin, User, Trainer
             builder.ApplyConfiguration(new UserSeed());        // Admin + Trainer users
             builder.ApplyConfiguration(new UserRoleSeed());    // Assign roles to users
-
+            builder.ApplyConfiguration(new WorkoutPlanExerciseSeed());
             // =============================
             // APP ENTITY SEEDS
             // =============================

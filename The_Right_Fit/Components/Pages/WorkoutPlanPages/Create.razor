@@ -1,8 +1,15 @@
 ﻿@page "/workoutplans/create"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Data
 @using The_Right_Fit.Domain
+
 @inject The_Right_FitContext Db
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Create Workout Plan</PageTitle>
 
@@ -10,64 +17,287 @@
     <div class="wp-head">
         <div>
             <h1 class="wp-title">Create Plan</h1>
-            <div class="wp-sub">Add a new workout plan to the library.</div>
+            <div class="wp-sub">Create a new plan and choose exercises.</div>
         </div>
 
         <NavLink class="wp-newbtn" href="/workoutplans">Back</NavLink>
     </div>
 
-    <div class="wp-card" style="padding:18px;">
-        <EditForm Model="model" OnValidSubmit="Save">
+    @if (isLoading)
+    {
+        <div class="wp-loading">Loading…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot create</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="plan" OnValidSubmit="Save" FormName="CreateWorkoutPlan">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <div class="mb-3">
-                <label class="wp-label">Plan Name</label>
-                <InputText class="wp-select" @bind-Value="model.PlanName" />
+            <div class="wp-card" style="padding:18px;">
+
+                <!-- Plan fields -->
+                <div style="display:grid; gap:12px;">
+                    <div>
+                        <div class="wp-label">Plan Name</div>
+                        <input class="wp-input"
+                               @bind="plan.PlanName"
+                               @bind:event="oninput" />
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <div>
+                            <div class="wp-label">Goal</div>
+                            <input class="wp-input"
+                                   @bind="plan.GoalType"
+                                   @bind:event="oninput" />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Difficulty</div>
+                            <select class="wp-select" @bind="plan.DifficultyLevel">
+                                <option value="">Select…</option>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="wp-label">Duration (weeks)</div>
+                        <input class="wp-input" type="number"
+                               @bind="plan.DurationWeeks"
+                               @bind:event="oninput" />
+                    </div>
+                </div>
+
+                <hr style="margin:16px 0; opacity:.2;" />
+
+                <!-- Exercises picker -->
+                <div>
+                    <div class="wp-label" style="margin-bottom:8px;">Exercises in this plan</div>
+
+                    @if (allExercises.Count == 0)
+                    {
+                        <div class="wp-sub">No exercises found in the database yet.</div>
+                    }
+                    else
+                    {
+                        <!-- Search + Muscle group filter -->
+                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="wp-searchbox">
+                                <span class="wp-searchicon">🔍</span>
+                                <input class="wp-input"
+                                       placeholder="Search exercises..."
+                                       @bind="exerciseSearch"
+                                       @bind:event="oninput" />
+                            </div>
+
+                            <select class="wp-select" @bind="selectedMuscleGroup">
+                                <option value="">All muscle groups</option>
+                                @foreach (var mg in muscleGroups)
+                                {
+                                    <option value="@mg">@mg</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="wp-sub" style="margin-bottom:8px;">
+                            Showing @FilteredExercises.Count of @allExercises.Count exercises
+                        </div>
+
+                        <div style="display:grid; gap:8px; max-height:320px; overflow:auto;">
+                            @foreach (var ex in FilteredExercises)
+                            {
+                                <label style="display:flex; gap:10px; align-items:center;" @key="ex.Id">
+                                    <input type="checkbox" @bind="checkedMap[ex.Id]" />
+                                    <span>
+                                        @ex.ExerciseName
+                                        @if (!string.IsNullOrWhiteSpace(GetMuscleGroup(ex)))
+                                        {
+                                            <span class="wp-sub" style="margin-left:8px;">
+                                                (@GetMuscleGroup(ex))
+                                            </span>
+                                        }
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:16px;">
+                    <button class="wp-newbtn" type="submit">Create Plan</button>
+
+                    <button class="wp-newbtn"
+                            type="button"
+                            style="background:rgba(15,23,42,.06); color:#0f172a; border-color:rgba(15,23,42,.10);"
+                            @onclick="@(() => Nav.NavigateTo("/workoutplans"))">
+                        Cancel
+                    </button>
+                </div>
+
             </div>
-
-            <div class="mb-3">
-                <label class="wp-label">Goal Type</label>
-                <InputText class="wp-select" @bind-Value="model.GoalType" />
-            </div>
-
-            <div class="mb-3">
-                <label class="wp-label">Difficulty Level</label>
-                <InputSelect class="wp-select" @bind-Value="model.DifficultyLevel">
-                    <option value="">Select</option>
-                    <option>Beginner</option>
-                    <option>Intermediate</option>
-                    <option>Advanced</option>
-                </InputSelect>
-            </div>
-
-            <div class="mb-3">
-                <label class="wp-label">Duration (Weeks)</label>
-                <InputNumber class="wp-select" @bind-Value="model.DurationWeeks" />
-            </div>
-
-            <div class="mb-3">
-                <label class="wp-label">UserId (optional)</label>
-                <InputNumber class="wp-select" @bind-Value="model.UserId" />
-            </div>
-
-           
-
-            <button class="wp-newbtn" type="submit">Create</button>
         </EditForm>
-    </div>
+    }
 </div>
 
 @code {
-    private WorkoutPlan model = new()
+    private WorkoutPlan plan = new(); // new plan
+    private bool isLoading = true;
+    private string? error;
+
+    // Auth
+    private string? identityUserId;
+    private bool isAdmin;
+
+    private List<Exercise> allExercises = new();
+
+    // checkbox binding that always works
+    private Dictionary<int, bool> checkedMap = new();
+
+    // Search + filter
+    private string exerciseSearch = "";
+    private string selectedMuscleGroup = "";
+    private List<string> muscleGroups = new();
+
+    // If your Exercise property name isn't MuscleGroup, change this helper.
+    private static string? GetMuscleGroup(Exercise ex)
+        => ex.GetType().GetProperty("MuscleGroup")?.GetValue(ex) as string;
+
+    private List<Exercise> FilteredExercises
     {
-        DurationWeeks = 4
-    };
+        get
+        {
+            IEnumerable<Exercise> q = allExercises;
+
+            if (!string.IsNullOrWhiteSpace(selectedMuscleGroup))
+            {
+                var mg = selectedMuscleGroup.Trim();
+                q = q.Where(e => (GetMuscleGroup(e) ?? "").Trim()
+                    .Equals(mg, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(exerciseSearch))
+            {
+                var s = exerciseSearch.Trim();
+                q = q.Where(e => (e.ExerciseName ?? "")
+                    .Contains(s, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return q.ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+
+        // ✅ Auth
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Identity/Account/Login", true);
+            return;
+        }
+
+        identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        isAdmin = user.IsInRole("Administrator");
+
+        // Load exercises
+        allExercises = await Db.Exercise
+            .OrderBy(e => e.ExerciseName)
+            .ToListAsync();
+
+        // Init checkbox map: default unchecked
+        checkedMap = allExercises.ToDictionary(e => e.Id, e => false);
+
+        // Muscle group dropdown
+        muscleGroups = allExercises
+            .Select(e => (GetMuscleGroup(e) ?? "").Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        // defaults (optional)
+        plan.DifficultyLevel = "Beginner";
+        plan.DurationWeeks = 4;
+
+        isLoading = false;
+    }
 
     private async Task Save()
     {
-        Db.WorkoutPlan.Add(model);
-        await Db.SaveChangesAsync();
+        // ✅ Server-side auth recheck
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Identity/Account/Login", true);
+            return;
+        }
+
+        var currentIdentityId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentIsAdmin = user.IsInRole("Administrator");
+
+        // basic validation (simple + friendly)
+        if (string.IsNullOrWhiteSpace(plan.PlanName))
+        {
+            error = "Please enter a plan name.";
+            return;
+        }
+
+        // Create new plan
+        var now = DateTime.Now;
+
+        var newPlan = new WorkoutPlan
+        {
+            PlanName = plan.PlanName?.Trim(),
+            GoalType = plan.GoalType?.Trim(),
+            DifficultyLevel = plan.DifficultyLevel,
+            DurationWeeks = plan.DurationWeeks,
+
+            DateCreated = now,
+            DateUpdated = now,
+            CreatedBy = currentIsAdmin ? "Admin" : "User",
+            UpdatedBy = currentIsAdmin ? "Admin" : "User",
+
+            // ✅ make it a user-owned plan
+            OwnerIdentityUserId = currentIdentityId
+        };
+
+        Db.WorkoutPlan.Add(newPlan);
+        await Db.SaveChangesAsync(); // so newPlan.Id is generated
+
+        // Selected ids from checkbox map
+        var selectedIds = checkedMap
+            .Where(kv => kv.Value)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        if (selectedIds.Count > 0)
+        {
+            var links = selectedIds.Select(exId => new WorkoutPlanExercise
+            {
+                WorkoutPlanId = newPlan.Id,
+                ExerciseId = exId
+            }).ToList();
+
+            await Db.WorkoutPlanExercise.AddRangeAsync(links);
+            await Db.SaveChangesAsync();
+        }
+
         Nav.NavigateTo("/workoutplans");
     }
 }

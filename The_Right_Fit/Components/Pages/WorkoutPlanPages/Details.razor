@@ -10,10 +10,11 @@
 <PageTitle>Workout Plan Details</PageTitle>
 
 <div class="wp">
+    <!-- HEADER -->
     <div class="wp-head">
         <div>
             <h1 class="wp-title">Plan Details</h1>
-            <div class="wp-sub">Full details of the selected plan.</div>
+            <div class="wp-sub">Full details of the selected workout plan.</div>
         </div>
 
         <div style="display:flex; gap:10px;">
@@ -22,28 +23,40 @@
         </div>
     </div>
 
-    @if (plan == null)
+    @if (plan is null)
     {
         <div class="wp-loading">Loading…</div>
     }
     else
     {
-        <div class="wp-card" style="padding:18px;">
-            <div class="wp-cardtop">
-                <span class="wp-tag">@Safe(plan.GoalType, "General")</span>
-                <span class="wp-weeks">@plan.DurationWeeks weeks</span>
-            </div>
+        <!-- PLAN CARD -->
+        <div class="wp-card">
+            <div class="wp-cardpad">
+                <div class="wp-cardtop">
+                    <span class="wp-tag">@Safe(plan.GoalType, "General")</span>
+                    <span class="wp-weeks">@plan.DurationWeeks weeks</span>
+                </div>
 
-            <div class="wp-name">@Safe(plan.PlanName, "Untitled Plan")</div>
+                <div class="wp-name">@Safe(plan.PlanName, "Untitled Plan")</div>
 
-            <div class="wp-diff">
-                <span class="wp-diffdot @DiffClass(plan.DifficultyLevel)"></span>
-                @Safe(plan.DifficultyLevel, "Not set")
-            </div>
+                <div class="wp-diff">
+                    <span class="wp-diffdot @DiffClass(plan.DifficultyLevel)"></span>
+                    @Safe(plan.DifficultyLevel, "Not set")
+                </div>
 
-            <div class="wp-desc" style="min-height:auto;">
-                <strong>UserId:</strong> @(plan.UserId?.ToString() ?? "—")<br />
-                
+                <div class="wp-kv">
+                    <div class="wp-k">Goal Type</div>
+                    <div class="wp-v">@Safe(plan.GoalType, "—")</div>
+
+                    <div class="wp-k">Difficulty</div>
+                    <div class="wp-v">@Safe(plan.DifficultyLevel, "—")</div>
+
+                    <div class="wp-k">Duration</div>
+                    <div class="wp-v">@plan.DurationWeeks weeks</div>
+
+                    <div class="wp-k">User</div>
+                    <div class="wp-v">@(plan.UserId?.ToString() ?? "Public")</div>
+                </div>
             </div>
 
             <div class="wp-cardbottom">
@@ -53,17 +66,118 @@
                 </div>
             </div>
         </div>
+
+        <!-- EXERCISES CARD -->
+        <div class="wp-card">
+            <div class="wp-cardpad">
+                <div class="wp-sectionhead">
+                    <h2 class="wp-sectiontitle">Exercises</h2>
+                </div>
+
+                @if (planExercises.Count == 0)
+                {
+                    <div class="wp-empty">
+                        <div class="wp-empty-title">No exercises added</div>
+                        <div class="wp-empty-sub">
+                            This workout plan does not have any exercises yet.
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var dayGroup in planExercises
+                                .GroupBy(x => x.DayOfWeek)
+                                .OrderBy(g => g.Key))
+                    {
+                        <div class="wp-day">
+                            <h3 class="wp-daytitle">@DayName(dayGroup.Key)</h3>
+
+                            <div class="wp-tablewrap">
+                                <table class="wp-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Exercise</th>
+                                            <th>Sets</th>
+                                            <th>Reps</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in dayGroup)
+                                        {
+                                            <tr>
+                                                <td>@row.ExerciseName</td>
+                                                <td>@row.Sets</td>
+                                                <td>@row.Reps</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
     }
 </div>
 
 @code {
     [Parameter] public int Id { get; set; }
+
     private WorkoutPlan? plan;
+    private List<PlanExerciseRow> planExercises = new();
 
     protected override async Task OnInitializedAsync()
     {
-        plan = await Db.WorkoutPlan.AsNoTracking().FirstOrDefaultAsync(x => x.Id == Id);
+        // Load plan
+        plan = await Db.WorkoutPlan
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == Id);
+
+        if (plan is null)
+        {
+            Nav.NavigateTo("/workoutplans");
+            return;
+        }
+
+        // Load exercises via join table (NO navigation collections)
+        planExercises = await Db.WorkoutPlanExercise
+            .AsNoTracking()
+            .Where(wpe => wpe.WorkoutPlanId == Id)
+            .Join(
+                Db.Exercise.AsNoTracking(),
+                wpe => wpe.ExerciseId,
+                ex => ex.Id,
+                (wpe, ex) => new PlanExerciseRow
+                {
+                    DayOfWeek = wpe.DayOfWeek,
+                    ExerciseName = ex.ExerciseName,
+                    Sets = wpe.Sets,
+                    Reps = wpe.Reps
+                }
+            )
+            .ToListAsync();
     }
+
+    private class PlanExerciseRow
+    {
+        public int DayOfWeek { get; set; }
+        public string ExerciseName { get; set; } = "";
+        public int Sets { get; set; }
+        public int Reps { get; set; }
+    }
+
+    private static string DayName(int d) => d switch
+    {
+        1 => "Monday",
+        2 => "Tuesday",
+        3 => "Wednesday",
+        4 => "Thursday",
+        5 => "Friday",
+        6 => "Saturday",
+        7 => "Sunday",
+        _ => $"Day {d}"
+    };
 
     private static string Safe(string? v, string fallback) =>
         string.IsNullOrWhiteSpace(v) ? fallback : v;
