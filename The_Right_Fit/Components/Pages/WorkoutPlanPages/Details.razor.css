@@ -1,111 +1,27 @@
-/* Details page uses same base container */
-.wp {
-    max-width: 1200px;
-    margin: 28px auto 90px;
-    padding: 0 18px;
-}
+/* =========================================
+   Details.razor.css (PAGE-ONLY)
+   Base wp styles live in app.css
+   ========================================= */
 
-/* Header */
-.wp-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 18px;
-    padding: 8px 0 18px;
-}
-
-.wp-title {
-    margin: 0;
-    font-size: 44px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    color: #0f172a;
-}
-
-.wp-sub {
-    margin: 8px 0 0;
-    color: rgba(15, 23, 42, 0.65);
-    font-weight: 650;
-    line-height: 1.4;
-}
-
-/* Buttons (reuse wp-newbtn style) */
-.wp-newbtn {
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--trf-primary);
-    color: #fff;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-weight: 900;
-    box-shadow: 0 14px 30px rgba(59, 130, 246, 0.18);
-    border: 1px solid rgba(59, 130, 246, 0.35);
-    white-space: nowrap;
-    user-select: none;
-}
-
-    .wp-newbtn:hover {
-        filter: brightness(0.96);
-    }
-
-.wp-plus {
-    width: 22px;
-    height: 22px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    background: rgba(255, 255, 255, 0.18);
-    font-weight: 950;
-    line-height: 1;
-}
-
-/* Cards */
+/* Details page wants the card narrower + centered */
 .wp-card {
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 14px 34px rgba(2, 6, 23, 0.06);
-    display: flex;
-    flex-direction: column;
-    /* Center the card visually (DESKTOP + MOBILE) */
     max-width: 900px;
     margin: 0 auto 14px;
 }
 
 .wp-cardpad {
     padding: 18px;
-    /* Center the inner content (DESKTOP + MOBILE) */
     max-width: 900px;
     margin: 0 auto;
 }
 
+/* Top row inside the card */
 .wp-cardtop {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
-}
-
-.wp-tag {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-weight: 900;
-    font-size: 12px;
-    background: rgba(59, 130, 246, 0.14);
-    border: 1px solid rgba(59, 130, 246, 0.22);
-    color: #1d4ed8;
-}
-
-.wp-weeks {
-    font-weight: 800;
-    color: rgba(15, 23, 42, 0.55);
-    font-size: 12px;
 }
 
 /* Plan name + difficulty */
@@ -165,38 +81,6 @@
     color: rgba(15, 23, 42, 0.85);
 }
 
-/* Card actions row */
-.wp-cardbottom {
-    margin-top: auto;
-    padding: 14px 16px 16px;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
-    background: rgba(15, 23, 42, 0.02);
-    display: grid;
-    gap: 10px;
-}
-
-.wp-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.wp-act {
-    flex: 1;
-    display: block;
-    text-align: center;
-    padding: 10px 10px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-weight: 900;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    background: rgba(15, 23, 42, 0.04);
-    color: rgba(15, 23, 42, 0.85);
-}
-
-    .wp-act:hover {
-        background: rgba(15, 23, 42, 0.06);
-    }
-
 /* Section title inside details */
 .wp-sectionhead {
     display: flex;
@@ -232,7 +116,6 @@
     color: #0f172a;
     font-size: 14px;
     letter-spacing: -0.01em;
-    /* day icon layout */
     display: flex;
     align-items: center;
     gap: 8px;
@@ -243,7 +126,7 @@
     opacity: 0.7;
 }
 
-/* Table style that matches your clean cards */
+/* Table */
 .wp-tablewrap {
     border: 1px solid rgba(15, 23, 42, 0.10);
     border-radius: 12px;
@@ -255,7 +138,6 @@
     width: 100%;
     border-collapse: collapse;
     font-weight: 700;
-    /* THIS fixes your column alignment issue */
     table-layout: fixed;
 }
 
@@ -280,7 +162,7 @@
         border-bottom: 0;
     }
 
-    /* Fixed column widths so SETS/REPS line up across all tables */
+    /* Fixed widths so sets/reps line up */
     .wp-table th:nth-child(1),
     .wp-table td:nth-child(1) {
         width: 60%;
@@ -294,7 +176,7 @@
         text-align: center;
     }
 
-/* Exercise name + icon */
+/* Exercise name */
 .wp-exname {
     display: flex;
     align-items: center;
@@ -307,38 +189,12 @@
     opacity: 0.75;
 }
 
-/* Optional: subtle hover */
 .wp-table tbody tr:hover {
     background: rgba(59, 130, 246, 0.04);
 }
 
-/* Empty/loading */
-.wp-loading,
-.wp-empty {
-    margin-top: 18px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 12px;
-    padding: 18px;
-    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.06);
-}
-
-/* Responsive */
+/* Responsive (details-only) */
 @media (max-width: 980px) {
-    .wp-title {
-        font-size: 36px;
-    }
-
-    .wp-head {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .wp-newbtn {
-        width: 100%;
-        justify-content: center;
-    }
-
     .wp-kv {
         grid-template-columns: 1fr;
     }

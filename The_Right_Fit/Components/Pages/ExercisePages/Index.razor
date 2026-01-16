@@ -1,44 +1,231 @@
 ﻿@page "/exercises"
+@rendermode InteractiveServer
+
+@using System.Linq
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using The_Right_Fit.Domain
 @using The_Right_Fit.Data
+
 @implements IAsyncDisposable
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject IDbContextFactory<The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Exercises</PageTitle>
 
-<h1>Index</h1>
+<div class="wp">
 
-<p>
-    <a href="exercises/create">Create New</a>
-</p>
+    <!-- HEADER -->
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Exercises</h1>
+            <div class="wp-sub">Browse exercises and watch demo videos.</div>
+        </div>
 
-<QuickGrid Class="table" Items="context.Exercise">
-    <PropertyColumn Property="exercise => exercise.ExerciseName" />
-    <PropertyColumn Property="exercise => exercise.MuscleGroup" />
-    <PropertyColumn Property="exercise => exercise.EquipmentNeeded" />
-    <PropertyColumn Property="exercise => exercise.Instructions" />
-    <PropertyColumn Property="exercise => exercise.VideoUrl" />
-    <PropertyColumn Property="exercise => exercise.DateCreated" />
-    <PropertyColumn Property="exercise => exercise.DateUpdated" />
-    <PropertyColumn Property="exercise => exercise.CreatedBy" />
-    <PropertyColumn Property="exercise => exercise.UpdatedBy" />
+        @if (isAdmin)
+        {
+            <a class="wp-newbtn" href="/exercises/create">
+                <span class="wp-plus">+</span>
+                Add Exercise
+            </a>
+        }
+    </div>
 
-    <TemplateColumn Context="exercise">
-        <a href="@($"exercises/edit?id={exercise.Id}")">Edit</a> |
-        <a href="@($"exercises/details?id={exercise.Id}")">Details</a> |
-        <a href="@($"exercises/delete?id={exercise.Id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
+
+    @if (isLoading)
+    {
+        <div class="wp-loading">Loading exercises…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Error</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else
+    {
+        <!-- FILTERS -->
+        <div class="wp-tools">
+            <div class="wp-searchbox wp-searchwide">
+                <span class="wp-searchicon">🔍</span>
+                <input class="wp-input"
+                       placeholder="Search by name, muscle, equipment…"
+                       @bind="search"
+                       @bind:event="oninput" />
+            </div>
+
+            <div class="wp-filter">
+                <div class="wp-label">Muscle Group</div>
+                <select class="wp-select" @bind="muscleGroup">
+                    <option value="">All</option>
+                    @foreach (var mg in muscleGroups)
+                    {
+                        <option value="@mg">@mg</option>
+                    }
+                </select>
+            </div>
+
+            <button class="wp-newbtn wp-btn-secondary" type="button" @onclick="ClearFilters">
+                Clear
+            </button>
+        </div>
+
+        <!-- TABLE -->
+        <div class="wp-card wp-tablecard">
+            <QuickGrid Class="wp-table"
+                       Items="FilteredItems"
+                       RowClass="RowClass">
+
+                <TemplateColumn Title="Exercise" Context="e">
+                    <div class="ex-cell ex-title">@e.ExerciseName</div>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Muscle" Context="e">
+                    <div class="ex-cell">
+                        <span class="wp-pill">@e.MuscleGroup</span>
+                    </div>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Equipment" Context="e">
+                    <div class="ex-cell">
+                        <span class="wp-cell-muted">
+                            @(string.IsNullOrWhiteSpace(e.EquipmentNeeded) ? "None" : e.EquipmentNeeded)
+                        </span>
+                    </div>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Video" Context="e">
+                    <div class="ex-cell">
+                        @if (!string.IsNullOrWhiteSpace(e.VideoUrl))
+                        {
+                            <a class="wp-yt"
+                               href="@e.VideoUrl"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                YouTube
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="wp-cell-muted">—</span>
+                        }
+                    </div>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Actions" Context="e">
+                    <div class="ex-actions">
+                        <!-- Users ALWAYS get Details -->
+                        <a class="wp-newbtn" href="@($"/exercises/details/{e.Id}")">Details</a>
+
+                        <!-- Admin gets Edit + Delete too -->
+                        @if (isAdmin)
+                        {
+                            <a class="wp-linkbtn" href="@($"/exercises/edit/{e.Id}")">Edit</a>
+                            <a class="wp-linkbtn wp-linkbtn-danger" href="@($"/exercises/delete/{e.Id}")">Delete</a>
+                        }
+                    </div>
+                </TemplateColumn>
+
+            </QuickGrid>
+        </div>
+
+        @if (!FilteredItems.Any())
+        {
+            <div class="wp-empty">
+                <div class="wp-empty-title">No exercises found</div>
+                <div class="wp-empty-sub">Try adjusting your filters.</div>
+            </div>
+        }
+    }
+</div>
 
 @code {
-    private The_Right_FitContext context = default!;
+    private The_Right_FitContext? db;
+    private bool isLoading = true;
+    private string? error;
 
-    protected override void OnInitialized()
+    private string search = "";
+    private string muscleGroup = "";
+    private List<string> muscleGroups = new();
+
+    private bool isAdmin;
+
+    private string RowClass(Exercise e) => "ex-row";
+
+    private IQueryable<Exercise> BaseQuery =>
+        (db?.Exercise ?? Enumerable.Empty<Exercise>().AsQueryable())
+            .AsNoTracking();
+
+    private IQueryable<Exercise> FilteredItems
     {
-        context = DbFactory.CreateDbContext();
+        get
+        {
+            var q = BaseQuery;
+
+            if (!string.IsNullOrWhiteSpace(muscleGroup))
+                q = q.Where(e => e.MuscleGroup == muscleGroup);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim().ToLower();
+                q = q.Where(e =>
+                    (e.ExerciseName ?? "").ToLower().Contains(s) ||
+                    (e.MuscleGroup ?? "").ToLower().Contains(s) ||
+                    (e.EquipmentNeeded ?? "").ToLower().Contains(s));
+            }
+
+            return q.OrderBy(e => e.ExerciseName);
+        }
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Identity/Account/Login", true);
+                return;
+            }
+
+            isAdmin = user.IsInRole("Administrator");
+
+            db = await DbFactory.CreateDbContextAsync();
+
+            muscleGroups = await db.Exercise
+                .AsNoTracking()
+                .Select(e => e.MuscleGroup)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            isLoading = false;
+        }
+    }
+
+    private void ClearFilters()
+    {
+        search = "";
+        muscleGroup = "";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (db is not null)
+            await db.DisposeAsync();
+    }
 }

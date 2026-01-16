@@ -1,9 +1,25 @@
 ﻿/* =========================================
    app.css (FULL) - The Right Fit
-   FIXED: Top bar NEVER wraps
+   - Base / Defaults
+   - TRF Theme
+   - Layout + Topbar (NO WRAP EVER)
+   - Landing Page
+   - WORKOUT PAGES (wp-*) GLOBAL DESIGN SYSTEM  ✅
    ========================================= */
 
 /* ---------- Base / Defaults ---------- */
+/* Secondary button with BLACK text */
+.wp-btn-secondary-black {
+    background: rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    color: #0f172a !important; /* black text */
+    box-shadow: none;
+}
+
+    .wp-btn-secondary-black:hover {
+        background: rgba(15, 23, 42, 0.08);
+    }
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -95,11 +111,10 @@ h1, h2, h3 {
 }
 
 .trf-topnav {
-    max-width: none; /* ✅ remove width limit */
-    width: 100%; /* ✅ stretch full screen */
+    max-width: none;
+    width: 100%;
     margin: 0;
-    padding: 12px 28px; /* slightly more padding */
-
+    padding: 12px 28px;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
@@ -120,17 +135,14 @@ h1, h2, h3 {
 .trf-topnav-links {
     display: flex;
     gap: 18px;
-    /* key fix */
-    justify-content: flex-start; /* was center */
+    justify-content: flex-start;
     flex-wrap: nowrap;
     white-space: nowrap;
     overflow-x: auto;
-    overflow-y: visible; /* don’t clip text height */
-
-    padding: 0 6px; /* little breathing room */
+    overflow-y: visible;
+    padding: 0 6px;
     -webkit-overflow-scrolling: touch;
 }
-
 
     .trf-topnav-links::-webkit-scrollbar {
         display: none;
@@ -206,9 +218,8 @@ h1, h2, h3 {
 }
 
 /* =========================================================
-   LANDING PAGE (unchanged)
+   LANDING PAGE
    ========================================================= */
-
 .lp {
     width: 100%;
 }
@@ -261,5 +272,288 @@ h1, h2, h3 {
 
     .lp-title {
         font-size: 48px;
+    }
+}
+
+/* =========================================================
+   WORKOUT PAGES (wp-*) GLOBAL DESIGN SYSTEM  ✅
+   Put all shared wp styles here so you can delete duplicates
+   from Index/Edit/Create/Details/Delete scoped css files.
+   ========================================================= */
+
+/* Base container + header */
+.wp {
+    max-width: 1200px;
+    margin: 28px auto 90px;
+    padding: 0 18px;
+}
+
+.wp-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    padding: 8px 0 18px;
+}
+
+.wp-title {
+    margin: 0;
+    font-size: 44px;
+    font-weight: 950;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+}
+
+.wp-sub {
+    margin: 8px 0 0;
+    color: rgba(15, 23, 42, 0.65);
+    font-weight: 650;
+    line-height: 1.4;
+    font-size: 14.5px;
+}
+
+/* Primary button (works for <button> and <a> / NavLink) */
+.wp-newbtn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: var(--trf-primary);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 900;
+    box-shadow: 0 14px 30px rgba(59, 130, 246, 0.18);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+}
+
+    .wp-newbtn:hover {
+        filter: brightness(0.96);
+    }
+
+/* ✅ GLOBAL NavLink fix (no ::deep needed) */
+a.wp-newbtn,
+a.wp-newbtn:visited,
+a.wp-newbtn:hover,
+a.wp-newbtn:active {
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Plus badge */
+.wp-plus {
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.18);
+    font-weight: 950;
+    line-height: 1;
+}
+
+/* Button variants */
+.wp-btn-secondary {
+    background: rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    color: #0f172a;
+    box-shadow: none;
+}
+
+    .wp-btn-secondary:hover {
+        background: rgba(15, 23, 42, 0.08);
+    }
+
+.wp-btn-danger {
+    background: #ef4444;
+    border-color: #ef4444;
+    box-shadow: 0 14px 30px rgba(239, 68, 68, 0.18);
+}
+
+    .wp-btn-danger:hover {
+        filter: brightness(0.96);
+    }
+
+/* Card base */
+.wp-card {
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 14px 34px rgba(2, 6, 23, 0.06);
+}
+
+/* Labels + inputs */
+.wp-label {
+    font-weight: 900;
+    color: rgba(15, 23, 42, 0.65);
+    font-size: 14px;
+}
+
+.wp-select {
+    width: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 700;
+    background: #fff;
+    outline: none;
+    color: rgba(15, 23, 42, 0.85);
+    font-size: 15.5px;
+}
+
+    .wp-select:focus {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.20);
+        border-color: rgba(59, 130, 246, 0.35);
+    }
+
+/* Searchbox */
+.wp-searchbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fff;
+}
+
+.wp-searchicon {
+    opacity: 0.55;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wp-input {
+    border: 0;
+    outline: none;
+    width: 100%;
+    font-weight: 700;
+    color: rgba(15, 23, 42, 0.85);
+    background: transparent;
+    font-size: 15.5px;
+}
+
+    .wp-input::placeholder {
+        color: rgba(15, 23, 42, 0.45);
+        font-weight: 650;
+    }
+
+/* Boxed input variant (used on Edit/Create plan fields) */
+.wp input.wp-input,
+.wp textarea.wp-input {
+    border: 1px solid rgba(15, 23, 42, 0.18);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #fff;
+}
+
+    .wp input.wp-input:focus,
+    .wp textarea.wp-input:focus {
+        outline: none;
+        border-color: rgba(59, 130, 246, 0.45);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    }
+
+/* Loading / empty blocks */
+.wp-loading,
+.wp-empty {
+    margin-top: 18px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.06);
+}
+
+.wp-empty-title {
+    font-weight: 950;
+    font-size: 18px;
+    color: #0f172a;
+}
+
+.wp-empty-sub {
+    margin-top: 6px;
+    color: rgba(15, 23, 42, 0.65);
+    font-weight: 650;
+    font-size: 14.5px;
+}
+
+/* Common divider */
+.wp-divider {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    margin: 2px 0;
+}
+/* =========================================
+   Button links – NEVER look like hyperlinks
+   ========================================= */
+
+a.wp-start,
+a.wp-start:visited,
+a.wp-start:hover,
+a.wp-start:active,
+a.wp-linkbtn,
+a.wp-linkbtn:visited,
+a.wp-linkbtn:hover,
+a.wp-linkbtn:active,
+a.wp-linkbtn-danger,
+a.wp-linkbtn-danger:visited,
+a.wp-linkbtn-danger:hover,
+a.wp-linkbtn-danger:active {
+    text-decoration: none !important;
+    color: inherit;
+}
+/* Small action buttons (View / Edit / Delete) */
+.wp-linkbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-weight: 900;
+    font-size: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: rgba(15, 23, 42, 0.04);
+    color: #0f172a;
+    cursor: pointer;
+}
+
+    .wp-linkbtn:hover {
+        background: rgba(15, 23, 42, 0.08);
+    }
+
+/* Delete button */
+.wp-linkbtn-danger {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #b91c1c;
+}
+
+    .wp-linkbtn-danger:hover {
+        background: rgba(239, 68, 68, 0.18);
+    }
+
+
+/* Common responsive behavior (header + buttons) */
+@media (max-width: 980px) {
+    .wp-title {
+        font-size: 38px;
+    }
+
+    .wp-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .wp-newbtn {
+        width: 100%;
+        justify-content: center;
     }
 }

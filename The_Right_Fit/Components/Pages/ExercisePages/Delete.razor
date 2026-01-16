@@ -1,87 +1,134 @@
-﻿@page "/exercises/delete"
+﻿@page "/exercises/delete/{Id:int}"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Data
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
 
-<PageTitle>Delete</PageTitle>
+@inject The_Right_FitContext Db
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<h1>Delete</h1>
+<PageTitle>Delete Exercise</PageTitle>
 
-<p>Are you sure you want to delete this?</p>
-<div>
-    <h2>Exercise</h2>
-    <hr />
-    @if (exercise is null)
+<div class="wp">
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Delete Exercise</h1>
+            <div class="wp-sub">This action cannot be undone.</div>
+        </div>
+    </div>
+
+    @if (isLoading)
     {
-        <p><em>Loading...</em></p>
+        <div class="wp-loading">Loading…</div>
     }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">ExerciseName</dt>
-            <dd class="col-sm-10">@exercise.ExerciseName</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">MuscleGroup</dt>
-            <dd class="col-sm-10">@exercise.MuscleGroup</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">EquipmentNeeded</dt>
-            <dd class="col-sm-10">@exercise.EquipmentNeeded</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">Instructions</dt>
-            <dd class="col-sm-10">@exercise.Instructions</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">VideoUrl</dt>
-            <dd class="col-sm-10">@exercise.VideoUrl</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">DateCreated</dt>
-            <dd class="col-sm-10">@exercise.DateCreated</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">DateUpdated</dt>
-            <dd class="col-sm-10">@exercise.DateUpdated</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">CreatedBy</dt>
-            <dd class="col-sm-10">@exercise.CreatedBy</dd>
-        </dl>
-        <dl class="row">
-            <dt class="col-sm-2">UpdatedBy</dt>
-            <dd class="col-sm-10">@exercise.UpdatedBy</dd>
-        </dl>
-        <EditForm method="post" Model="exercise" OnValidSubmit="DeleteExercise" FormName="delete" Enhance>
-            <button type="submit" class="btn btn-danger" disabled="@(exercise is null)">Delete</button> |
-            <a href="/exercises">Back to List</a>
-        </EditForm>
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot delete</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else if (exercise is null)
+    {
+        <div class="wp-loading">Exercise not found.</div>
+    }
+    else
+    {
+        <div class="wp-card" style="padding:18px;">
+            <div class="wp-name">@Safe(exercise.ExerciseName, "Untitled Exercise")</div>
+
+            <div class="wp-desc" style="min-height:auto;">
+                <div><strong>Muscle Group:</strong> @Safe(exercise.MuscleGroup, "—")</div>
+                <div><strong>Equipment:</strong> @Safe(exercise.EquipmentNeeded, "—")</div>
+                <div>
+                    <strong>Video:</strong>
+                    @if (!string.IsNullOrWhiteSpace(exercise.VideoUrl))
+                    {
+                        <a class="wp-yt" href="@exercise.VideoUrl" target="_blank" rel="noopener noreferrer">YouTube</a>
+                    }
+                    else
+                    {
+                        <span class="wp-cell-muted">—</span>
+                    }
+                </div>
+            </div>
+
+            <div class="wp-dangerbox">
+                <div class="wp-danger-title">Warning</div>
+                <div class="wp-danger-sub">
+                    Deleting this exercise will permanently remove it. Any workout plans using it may be affected.
+                </div>
+            </div>
+
+            <div class="wp-actions">
+                <button class="wp-newbtn wp-btn-danger" @onclick="ConfirmDelete">
+                    Delete
+                </button>
+
+                <a class="wp-linkbtn"
+                   href="/exercises">
+                    Cancel
+                </a>
+            </div>
+        </div>
     }
 </div>
 
 @code {
-    private Exercise? exercise;
+    [Parameter] public int Id { get; set; }
 
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    private Exercise? exercise;
+    private bool isLoading = true;
+    private string? error;
+
+    private bool isAdmin;
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        exercise = await context.Exercise.FirstOrDefaultAsync(m => m.Id == Id);
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
 
-        if (exercise is null)
+        if (user.Identity?.IsAuthenticated != true)
         {
-            NavigationManager.NavigateTo("notfound");
+            Nav.NavigateTo("/Identity/Account/Login", true);
+            return;
         }
+
+        isAdmin = user.IsInRole("Administrator");
+        if (!isAdmin)
+        {
+            // ✅ Non-admins cannot access delete
+            Nav.NavigateTo("/exercises", true);
+            return;
+        }
+
+        isLoading = true;
+
+        exercise = await Db.Exercise.FirstOrDefaultAsync(x => x.Id == Id);
+        if (exercise == null)
+            error = "Exercise not found.";
+
+        isLoading = false;
     }
 
-    private async Task DeleteExercise()
+    private async Task ConfirmDelete()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Exercise.Remove(exercise!);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/exercises");
+        if (exercise is null) return;
+
+        // Optional safety: remove links if you have a join table (uncomment if needed)
+        // var links = await Db.WorkoutPlanExercise.Where(x => x.ExerciseId == exercise.Id).ToListAsync();
+        // if (links.Any()) Db.WorkoutPlanExercise.RemoveRange(links);
+
+        Db.Exercise.Remove(exercise);
+        await Db.SaveChangesAsync();
+
+        Nav.NavigateTo("/exercises");
     }
+
+    private static string Safe(string? v, string fallback) =>
+        string.IsNullOrWhiteSpace(v) ? fallback : v;
 }

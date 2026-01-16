@@ -1,66 +1,9 @@
-.wp {
-    max-width: 1200px;
-    margin: 28px auto 90px;
-    padding: 0 18px;
-}
+/* =========================================
+   WorkoutPlans.razor.css (INDEX only)
+   Shared wp base styles are in app.css
+   ========================================= */
 
-/* Header */
-.wp-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 18px;
-    padding: 8px 0 18px;
-}
-
-.wp-title {
-    margin: 0;
-    font-size: 44px;
-    font-weight: 950;
-    letter-spacing: -0.03em;
-    color: #0f172a;
-}
-
-.wp-sub {
-    margin: 8px 0 0;
-    color: rgba(15, 23, 42, 0.65);
-    font-weight: 650;
-    line-height: 1.4;
-}
-
-/* New Plan button */
-.wp-newbtn {
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    background: var(--trf-primary);
-    color: #fff;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-weight: 900;
-    box-shadow: 0 14px 30px rgba(59, 130, 246, 0.18);
-    border: 1px solid rgba(59, 130, 246, 0.35);
-    white-space: nowrap;
-    user-select: none;
-}
-
-    .wp-newbtn:hover {
-        filter: brightness(0.96);
-    }
-
-.wp-plus {
-    width: 22px;
-    height: 22px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    background: rgba(255, 255, 255, 0.18);
-    font-weight: 950;
-    line-height: 1;
-}
-
-/* Filters */
+/* Filters (index layout) */
 .wp-filters {
     background: #fff;
     border: 1px solid rgba(15, 23, 42, 0.10);
@@ -80,60 +23,7 @@
     min-width: 0;
 }
 
-.wp-label {
-    font-weight: 900;
-    color: rgba(15, 23, 42, 0.65);
-    font-size: 13px;
-}
-
-.wp-select {
-    width: 100%;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-weight: 700;
-    background: #fff;
-    outline: none;
-    color: rgba(15, 23, 42, 0.85);
-}
-
-    .wp-select:focus {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.20);
-        border-color: rgba(59, 130, 246, 0.35);
-    }
-
-.wp-searchbox {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 10px;
-    padding: 10px 12px;
-    background: #fff;
-}
-
-.wp-searchicon {
-    opacity: 0.55;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.wp-input {
-    border: 0;
-    outline: none;
-    width: 100%;
-    font-weight: 700;
-    color: rgba(15, 23, 42, 0.85);
-    background: transparent;
-}
-
-    .wp-input::placeholder {
-        color: rgba(15, 23, 42, 0.45);
-        font-weight: 650;
-    }
-
-/* Grid */
+/* Grid of cards */
 .wp-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -141,17 +31,7 @@
     margin-top: 6px;
 }
 
-/* Card */
-.wp-card {
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 14px 34px rgba(2, 6, 23, 0.06);
-    display: flex;
-    flex-direction: column;
-}
-
+/* Card content layout */
 .wp-cardtop {
     display: flex;
     justify-content: space-between;
@@ -269,30 +149,7 @@
         background: rgba(15, 23, 42, 0.06);
     }
 
-/* Loading / empty */
-.wp-loading,
-.wp-empty {
-    margin-top: 18px;
-    background: #fff;
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 12px;
-    padding: 18px;
-    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.06);
-}
-
-.wp-empty-title {
-    font-weight: 950;
-    font-size: 18px;
-    color: #0f172a;
-}
-
-.wp-empty-sub {
-    margin-top: 6px;
-    color: rgba(15, 23, 42, 0.65);
-    font-weight: 650;
-}
-
-/* Responsive */
+/* Responsive (index only) */
 @media (max-width: 980px) {
     .wp-filters {
         grid-template-columns: 1fr;
@@ -300,19 +157,5 @@
 
     .wp-grid {
         grid-template-columns: 1fr;
-    }
-
-    .wp-title {
-        font-size: 36px;
-    }
-
-    .wp-head {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .wp-newbtn {
-        width: 100%;
-        justify-content: center;
     }
 }

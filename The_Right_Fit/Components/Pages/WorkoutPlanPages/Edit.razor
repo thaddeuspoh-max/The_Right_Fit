@@ -20,7 +20,7 @@
             <div class="wp-sub">Update plan details and included exercises.</div>
         </div>
 
-        <NavLink class="wp-newbtn" href="/workoutplans">Back</NavLink>
+        <NavLink class="wp-newbtn wp-linkbtn" href="/workoutplans">Back</NavLink>
     </div>
 
     @if (isLoading)
@@ -44,26 +44,33 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <div class="wp-card" style="padding:18px;">
+            <div class="wp-card">
+                <div class="wp-form">
 
-                <!-- Plan fields -->
-                <div style="display:grid; gap:12px;">
-                    <div>
-                        <div class="wp-label">Plan Name</div>
-                        <input class="wp-input"
-                               @bind="plan.PlanName"
-                               @bind:event="oninput" />
-                    </div>
+                    <!-- Plan fields -->
+                    <div class="wp-formgrid">
+                        <div class="wp-field">
+                            <div class="wp-label">Plan Name</div>
+                            <input class="wp-input"
+                                   @bind="plan.PlanName"
+                                   @bind:event="oninput" />
+                        </div>
 
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                        <div>
+                        <div class="wp-field">
+                            <div class="wp-label">Duration (weeks)</div>
+                            <input class="wp-input" type="number"
+                                   @bind="plan.DurationWeeks"
+                                   @bind:event="oninput" />
+                        </div>
+
+                        <div class="wp-field">
                             <div class="wp-label">Goal</div>
                             <input class="wp-input"
                                    @bind="plan.GoalType"
                                    @bind:event="oninput" />
                         </div>
 
-                        <div>
+                        <div class="wp-field">
                             <div class="wp-label">Difficulty</div>
                             <select class="wp-select" @bind="plan.DifficultyLevel">
                                 <option value="">Select…</option>
@@ -74,80 +81,75 @@
                         </div>
                     </div>
 
+                    <div class="wp-divider"></div>
+
+                    <!-- Exercises section -->
                     <div>
-                        <div class="wp-label">Duration (weeks)</div>
-                        <input class="wp-input" type="number"
-                               @bind="plan.DurationWeeks"
-                               @bind:event="oninput" />
+                        <div class="wp-ex-head">
+                            <h3 class="wp-ex-title">Exercises in this plan</h3>
+                            <div class="wp-ex-meta">
+                                Showing @FilteredExercises.Count of @allExercises.Count
+                            </div>
+                        </div>
+
+                        @if (allExercises.Count == 0)
+                        {
+                            <div class="wp-sub">No exercises found in the database yet.</div>
+                        }
+                        else
+                        {
+                            <!-- Filters -->
+                            <div class="wp-ex-filters">
+                                <div class="wp-searchbox">
+                                    <span class="wp-searchicon">🔍</span>
+                                    <input class="wp-input"
+                                           placeholder="Search exercises..."
+                                           @bind="exerciseSearch"
+                                           @bind:event="oninput" />
+                                </div>
+
+                                <select class="wp-select" @bind="selectedMuscleGroup">
+                                    <option value="">All muscle groups</option>
+                                    @foreach (var mg in muscleGroups)
+                                    {
+                                        <option value="@mg">@mg</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- List -->
+                            <div class="wp-ex-list">
+                                @foreach (var ex in FilteredExercises)
+                                {
+                                    <label class="wp-ex-item" @key="ex.Id">
+                                        <input class="wp-check" type="checkbox" @bind="checkedMap[ex.Id]" />
+
+                                        <div style="min-width:0;">
+                                            <div class="wp-ex-name">
+                                                @ex.ExerciseName
+                                                @if (!string.IsNullOrWhiteSpace(GetMuscleGroup(ex)))
+                                                {
+                                                    <span class="wp-ex-mg">(@GetMuscleGroup(ex))</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </label>
+                                }
+                            </div>
+                        }
                     </div>
                 </div>
 
-                <hr style="margin:16px 0; opacity:.2;" />
-
-                <!-- Exercises picker -->
-                <div>
-                    <div class="wp-label" style="margin-bottom:8px;">Exercises in this plan</div>
-
-                    @if (allExercises.Count == 0)
-                    {
-                        <div class="wp-sub">No exercises found in the database yet.</div>
-                    }
-                    else
-                    {
-                        <!-- Search + Muscle group filter -->
-                        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; margin-bottom:12px;">
-                            <div class="wp-searchbox">
-                                <span class="wp-searchicon">🔍</span>
-                                <input class="wp-input"
-                                       placeholder="Search exercises..."
-                                       @bind="exerciseSearch"
-                                       @bind:event="oninput" />
-                            </div>
-
-                            <select class="wp-select" @bind="selectedMuscleGroup">
-                                <option value="">All muscle groups</option>
-                                @foreach (var mg in muscleGroups)
-                                {
-                                    <option value="@mg">@mg</option>
-                                }
-                            </select>
-                        </div>
-
-                        <div class="wp-sub" style="margin-bottom:8px;">
-                            Showing @FilteredExercises.Count of @allExercises.Count exercises
-                        </div>
-
-                        <div style="display:grid; gap:8px; max-height:320px; overflow:auto;">
-                            @foreach (var ex in FilteredExercises)
-                            {
-                                <label style="display:flex; gap:10px; align-items:center;" @key="ex.Id">
-                                    <input type="checkbox" @bind="checkedMap[ex.Id]" />
-                                    <span>
-                                        @ex.ExerciseName
-                                        @if (!string.IsNullOrWhiteSpace(GetMuscleGroup(ex)))
-                                        {
-                                            <span class="wp-sub" style="margin-left:8px;">
-                                                (@GetMuscleGroup(ex))
-                                            </span>
-                                        }
-                                    </span>
-                                </label>
-                            }
-                        </div>
-                    }
-                </div>
-
-                <div style="display:flex; gap:10px; margin-top:16px;">
+                <!-- Footer actions -->
+                <div class="wp-actionsbar">
                     <button class="wp-newbtn" type="submit">Save Changes</button>
 
-                    <button class="wp-newbtn"
+                    <button class="wp-newbtn wp-linkbtn"
                             type="button"
-                            style="background:rgba(15,23,42,.06); color:#0f172a; border-color:rgba(15,23,42,.10);"
                             @onclick="@(() => Nav.NavigateTo("/workoutplans"))">
                         Cancel
                     </button>
                 </div>
-
             </div>
         </EditForm>
     }
@@ -229,8 +231,6 @@
         }
 
         // ✅ Authorization rules
-        // - If plan has OwnerIdentityUserId: owner OR admin can edit
-        // - If plan is seeded/library (OwnerIdentityUserId is null/empty): admin only
         if (!string.IsNullOrWhiteSpace(plan.OwnerIdentityUserId))
         {
             if (!isAdmin && plan.OwnerIdentityUserId != identityUserId)
@@ -284,7 +284,7 @@
     {
         if (plan == null) return;
 
-        // ✅ Server-side auth recheck (blocks URL tampering / manual POST)
+        // ✅ Server-side auth recheck
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = auth.User;
 

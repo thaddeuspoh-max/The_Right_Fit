@@ -1,129 +1,217 @@
-﻿@page "/exercises/edit"
+﻿@page "/exercises/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@using The_Right_Fit.Data
 
-<PageTitle>Edit</PageTitle>
+@inject IDbContextFactory<The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<h1>Edit</h1>
+<PageTitle>Edit Exercise</PageTitle>
 
-<h2>Exercise</h2>
-<hr />
-@if (Exercise is null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <div class="row">
-        <div class="col-md-4">
-            <EditForm method="post" Model="Exercise" OnValidSubmit="UpdateExercise" FormName="edit" Enhance>
-                <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
-                <input type="hidden" name="Exercise.Id" value="@Exercise.Id" />
-                <div class="mb-3">
-                    <label for="exercisename" class="form-label">ExerciseName:</label>
-                    <InputText id="exercisename" @bind-Value="Exercise.ExerciseName" class="form-control" />
-                    <ValidationMessage For="() => Exercise.ExerciseName" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="musclegroup" class="form-label">MuscleGroup:</label>
-                    <InputText id="musclegroup" @bind-Value="Exercise.MuscleGroup" class="form-control" />
-                    <ValidationMessage For="() => Exercise.MuscleGroup" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="equipmentneeded" class="form-label">EquipmentNeeded:</label>
-                    <InputText id="equipmentneeded" @bind-Value="Exercise.EquipmentNeeded" class="form-control" />
-                    <ValidationMessage For="() => Exercise.EquipmentNeeded" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="instructions" class="form-label">Instructions:</label>
-                    <InputText id="instructions" @bind-Value="Exercise.Instructions" class="form-control" />
-                    <ValidationMessage For="() => Exercise.Instructions" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="videourl" class="form-label">VideoUrl:</label>
-                    <InputText id="videourl" @bind-Value="Exercise.VideoUrl" class="form-control" />
-                    <ValidationMessage For="() => Exercise.VideoUrl" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="datecreated" class="form-label">DateCreated:</label>
-                    <InputDate id="datecreated" @bind-Value="Exercise.DateCreated" class="form-control" />
-                    <ValidationMessage For="() => Exercise.DateCreated" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="dateupdated" class="form-label">DateUpdated:</label>
-                    <InputDate id="dateupdated" @bind-Value="Exercise.DateUpdated" class="form-control" />
-                    <ValidationMessage For="() => Exercise.DateUpdated" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="createdby" class="form-label">CreatedBy:</label>
-                    <InputText id="createdby" @bind-Value="Exercise.CreatedBy" class="form-control" />
-                    <ValidationMessage For="() => Exercise.CreatedBy" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="updatedby" class="form-label">UpdatedBy:</label>
-                    <InputText id="updatedby" @bind-Value="Exercise.UpdatedBy" class="form-control" />
-                    <ValidationMessage For="() => Exercise.UpdatedBy" class="text-danger" />
-                </div>
-                <button type="submit" class="btn btn-primary">Save</button>
-            </EditForm>
+<div class="wp">
+
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Edit Exercise</h1>
+            <div class="wp-sub">Update exercise details. Audit fields are locked.</div>
         </div>
-    </div>
-}
 
-<div>
-    <a href="/exercises">Back to List</a>
+        <a class="wp-linkbtn" href="/exercises">
+            Back
+        </a>
+
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="wp-loading">Loading…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot edit</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else if (exercise is null)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">This exercise does not exist.</div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="exercise" OnValidSubmit="Save">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="wp-card" style="padding:18px;">
+                <div style="display:grid; gap:14px;">
+
+                    <div>
+                        <div class="wp-label">Exercise Name</div>
+                        <InputText class="wp-input" @bind-Value="exercise.ExerciseName" />
+                        <ValidationMessage For="() => exercise.ExerciseName" class="validation-message" />
+                    </div>
+
+                    <div>
+                        <div class="wp-label">Muscle Group</div>
+                        <InputText class="wp-input" @bind-Value="exercise.MuscleGroup" />
+                        <ValidationMessage For="() => exercise.MuscleGroup" class="validation-message" />
+                    </div>
+
+                    <div>
+                        <div class="wp-label">Equipment Needed</div>
+                        <InputText class="wp-input" @bind-Value="exercise.EquipmentNeeded" />
+                        <ValidationMessage For="() => exercise.EquipmentNeeded" class="validation-message" />
+                    </div>
+
+                    <div>
+                        <div class="wp-label">Instructions</div>
+                        <InputTextArea class="wp-input" rows="4" @bind-Value="exercise.Instructions" />
+                        <ValidationMessage For="() => exercise.Instructions" class="validation-message" />
+                    </div>
+
+                    <div>
+                        <div class="wp-label">Video URL (YouTube)</div>
+                        <InputText class="wp-input" @bind-Value="exercise.VideoUrl" />
+                        <ValidationMessage For="() => exercise.VideoUrl" class="validation-message" />
+                    </div>
+
+                    <div class="wp-divider"></div>
+
+                    <!-- ✅ Audit fields: DISPLAY ONLY (NOT binded) -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+                        <div>
+                            <div class="wp-label">Created By</div>
+                            <input class="wp-input" value="@exercise.CreatedBy" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Date Created</div>
+                            <input class="wp-input" value="@exercise.DateCreated.ToString("yyyy-MM-dd HH:mm")" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Updated By</div>
+                            <input class="wp-input" value="@exercise.UpdatedBy" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Date Updated</div>
+                            <input class="wp-input" value="@exercise.DateUpdated.ToString("yyyy-MM-dd HH:mm")" disabled />
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap; margin-top:6px;">
+                        <button type="submit" class="wp-newbtn">
+                            Save Changes
+                        </button>
+                        <a class="wp-linkbtn" href="/exercises">
+                            Cancel
+                        </a>
+
+                    </div>
+
+                </div>
+            </div>
+        </EditForm>
+    }
 </div>
 
 @code {
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
-    [SupplyParameterFromForm]
-    private Exercise? Exercise { get; set; }
+    private bool isLoading = true;
+    private string? error;
+
+    private Exercise? exercise;
+
+    private bool isAdmin;
+    private string adminDisplayName = "Admin";
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        Exercise ??= await context.Exercise.FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (Exercise is null)
+        try
         {
-            NavigationManager.NavigateTo("notfound");
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Identity/Account/Login", true);
+                return;
+            }
+
+            isAdmin = user.IsInRole("Administrator");
+            if (!isAdmin)
+            {
+                // ✅ Non-admins cannot access edit page
+                Nav.NavigateTo("/exercises", true);
+                return;
+            }
+
+            adminDisplayName =
+                user.FindFirstValue(ClaimTypes.Name)
+                ?? user.FindFirstValue(ClaimTypes.Email)
+                ?? user.Identity?.Name
+                ?? "Admin";
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+            exercise = await db.Exercise.FirstOrDefaultAsync(e => e.Id == Id);
+
+            if (exercise is null)
+                error = "Exercise not found.";
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task UpdateExercise()
+    private async Task Save()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Attach(Exercise!).State = EntityState.Modified;
+        if (exercise is null) return;
 
         try
         {
-            await context.SaveChangesAsync();
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            // ✅ Force audit fields (cannot be edited by UI)
+            exercise.UpdatedBy = adminDisplayName;
+            exercise.DateUpdated = DateTime.Now;
+
+            db.Attach(exercise);
+            db.Entry(exercise).State = EntityState.Modified;
+
+            // ✅ Security: never allow Created fields to be modified
+            db.Entry(exercise).Property(x => x.CreatedBy).IsModified = false;
+            db.Entry(exercise).Property(x => x.DateCreated).IsModified = false;
+
+            // ✅ Ensure Updated fields ARE written
+            db.Entry(exercise).Property(x => x.UpdatedBy).IsModified = true;
+            db.Entry(exercise).Property(x => x.DateUpdated).IsModified = true;
+
+            await db.SaveChangesAsync();
+            Nav.NavigateTo("/exercises");
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!ExerciseExists(Exercise!.Id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
+            error = "This record was updated by someone else. Reload and try again.";
         }
-
-        NavigationManager.NavigateTo("/exercises");
-    }
-
-    private bool ExerciseExists(int id)
-    {
-        using var context = DbFactory.CreateDbContext();
-        return context.Exercise.Any(e => e.Id == id);
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
     }
 }

@@ -79,6 +79,13 @@
         <div class="wp-grid">
             @foreach (var p in FilteredPlans)
             {
+                var isSystemPlan = string.IsNullOrWhiteSpace(p.OwnerIdentityUserId);
+                var isMyPlan = !isSystemPlan && (p.OwnerIdentityUserId == identityUserId);
+
+                // ✅ Admin can manage ONLY system plans
+                // ✅ Users can manage ONLY their own plans
+                var canManage = (isAdmin && isSystemPlan) || (!isAdmin && isMyPlan);
+
                 <div class="wp-card">
 
                     <div class="wp-cardtop">
@@ -98,14 +105,27 @@
                     </div>
 
                     <div class="wp-cardbottom">
-                        <NavLink class="wp-start" href="@($"/workoutplans/details/{p.Id}")">
+
+                        <!-- Everyone can view/start -->
+                        <NavLink class="wp-newbtn" href="@($"/workoutplans/details/{p.Id}")">
                             View / Start Plan
                         </NavLink>
 
-                        <div class="wp-actions">
-                            <NavLink class="wp-act" href="@($"/workoutplans/edit/{p.Id}")">Edit</NavLink>
-                            <NavLink class="wp-act" href="@($"/workoutplans/delete/{p.Id}")">Delete</NavLink>
-                        </div>
+                        <!-- Edit/Delete rules -->
+                        @if (canManage)
+                        {
+                            <div class="wp-actions">
+                                <NavLink class="wp-linkbtn" href="@($"/workoutplans/edit/{p.Id}")">
+                                    Edit
+                                </NavLink>
+
+                                <NavLink class="wp-linkbtn wp-linkbtn-danger"
+                                         href="@($"/workoutplans/delete/{p.Id}")">
+                                    Delete
+                                </NavLink>
+                            </div>
+                        }
+
                     </div>
 
                 </div>
@@ -157,15 +177,14 @@
         {
             IEnumerable<WorkoutPlan> q = allPlans;
 
-            // ✅ Hide personalised plans from Admin:
-            // Admin sees ONLY library/public plans (OwnerIdentityUserId null/empty)
+            // ✅ Admin sees ONLY system/library plans
             if (isAdmin)
             {
                 q = q.Where(x => string.IsNullOrWhiteSpace(x.OwnerIdentityUserId));
             }
             else
             {
-                // Normal user sees library + their own personalised plans
+                // ✅ Users see system plans + their own plans (NOT other people's)
                 q = q.Where(x =>
                     string.IsNullOrWhiteSpace(x.OwnerIdentityUserId) ||
                     x.OwnerIdentityUserId == identityUserId

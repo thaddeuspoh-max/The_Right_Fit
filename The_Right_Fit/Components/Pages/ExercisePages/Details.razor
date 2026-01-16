@@ -1,62 +1,139 @@
-﻿@page "/exercises/details"
+﻿@page "/exercises/details/{Id:int}"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@using The_Right_Fit.Data
 
-<PageTitle>Details</PageTitle>
+@inject IDbContextFactory<The_Right_FitContext> DbFactory
+@inject NavigationManager Nav
 
-<h1>Details</h1>
+<PageTitle>Exercise Details</PageTitle>
 
-<div>
-    <h2>Exercise</h2>
-    <hr />
-    @if (exercise is null)
-    {
-        <p><em>Loading...</em></p>
-    }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">ExerciseName</dt>
-            <dd class="col-sm-10">@exercise.ExerciseName</dd>
-            <dt class="col-sm-2">MuscleGroup</dt>
-            <dd class="col-sm-10">@exercise.MuscleGroup</dd>
-            <dt class="col-sm-2">EquipmentNeeded</dt>
-            <dd class="col-sm-10">@exercise.EquipmentNeeded</dd>
-            <dt class="col-sm-2">Instructions</dt>
-            <dd class="col-sm-10">@exercise.Instructions</dd>
-            <dt class="col-sm-2">VideoUrl</dt>
-            <dd class="col-sm-10">@exercise.VideoUrl</dd>
-            <dt class="col-sm-2">DateCreated</dt>
-            <dd class="col-sm-10">@exercise.DateCreated</dd>
-            <dt class="col-sm-2">DateUpdated</dt>
-            <dd class="col-sm-10">@exercise.DateUpdated</dd>
-            <dt class="col-sm-2">CreatedBy</dt>
-            <dd class="col-sm-10">@exercise.CreatedBy</dd>
-            <dt class="col-sm-2">UpdatedBy</dt>
-            <dd class="col-sm-10">@exercise.UpdatedBy</dd>
-        </dl>
+<div class="wp">
+
+    <div class="wp-head">
         <div>
-            <a href="@($"/exercises/edit?id={exercise.Id}")">Edit</a> |
-            <a href="@($"/exercises")">Back to List</a>
+            <h1 class="wp-title">Exercise Details</h1>
+            <div class="wp-sub">Full information about the selected exercise.</div>
+        </div>
+
+        <a class="wp-newbtn" href="/exercises">
+            Back
+        </a>
+
+    </div>
+
+    @if (exercise is null && isLoading)
+    {
+        <div class="wp-loading">Loading…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot load exercise</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else if (exercise is null)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">This exercise does not exist.</div>
+        </div>
+    }
+    else
+    {
+        <div class="wp-card" style="padding:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:22px; font-weight:950; letter-spacing:-.02em;">
+                        @exercise.ExerciseName
+                    </div>
+                    <div style="margin-top:10px;">
+                        <span class="wp-pill">@exercise.MuscleGroup</span>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(exercise.VideoUrl))
+                {
+                    <a class="wp-yt"
+                       href="@exercise.VideoUrl"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       title="Open video in new tab">
+                        ▶ YouTube
+                    </a>
+                }
+            </div>
+
+            <div class="wp-divider" style="margin:16px 0;"></div>
+
+            <div style="display:grid; grid-template-columns: 240px 1fr; gap:14px; align-items:start;">
+                <div class="wp-label">Equipment Needed</div>
+                <div style="font-weight:750;">
+                    @(string.IsNullOrWhiteSpace(exercise.EquipmentNeeded) ? "None" : exercise.EquipmentNeeded)
+                </div>
+
+                <div class="wp-label">Instructions</div>
+                <div class="wp-wraptext">
+                    @exercise.Instructions
+                </div>
+            </div>
+
+            <div class="wp-divider" style="margin:16px 0;"></div>
+
+            <div style="display:grid; grid-template-columns: 240px 1fr; gap:14px;">
+                <div class="wp-label">Created</div>
+                <div style="font-weight:750;">
+                    @exercise.DateCreated
+                    @if (!string.IsNullOrWhiteSpace(exercise.CreatedBy))
+                    {
+                        <span style="color:rgba(15,23,42,.65); font-weight:700;"> · @exercise.CreatedBy</span>
+                    }
+                </div>
+
+                <div class="wp-label">Last Updated</div>
+                <div style="font-weight:750;">
+                    @exercise.DateUpdated
+                    @if (!string.IsNullOrWhiteSpace(exercise.UpdatedBy))
+                    {
+                        <span style="color:rgba(15,23,42,.65); font-weight:700;"> · @exercise.UpdatedBy</span>
+                    }
+                </div>
+            </div>
         </div>
     }
 </div>
 
 @code {
-    private Exercise? exercise;
+    [Parameter] public int Id { get; set; }
 
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    private Exercise? exercise;
+    private bool isLoading = true;
+    private string? error;
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        exercise = await context.Exercise.FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (exercise is null)
+        try
         {
-            NavigationManager.NavigateTo("notfound");
+            await using var context = await DbFactory.CreateDbContextAsync();
+            exercise = await context.Exercise.AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == Id);
+
+            if (exercise is null)
+            {
+                // optional: redirect to a "notfound" route if you have one
+                // Nav.NavigateTo("/notfound");
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 }
