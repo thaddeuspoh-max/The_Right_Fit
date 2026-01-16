@@ -19,7 +19,6 @@
 
         <div style="display:flex; gap:10px;">
             <NavLink class="wp-newbtn" href="/workoutplans">Back</NavLink>
-            <NavLink class="wp-newbtn" href="@($"/workoutplans/edit/{Id}")">Edit</NavLink>
         </div>
     </div>
 
@@ -54,17 +53,12 @@
                     <div class="wp-k">Duration</div>
                     <div class="wp-v">@plan.DurationWeeks weeks</div>
 
-                    <div class="wp-k">User</div>
-                    <div class="wp-v">@(plan.UserId?.ToString() ?? "Public")</div>
+                    <div class="wp-k">Created By</div>
+                    <div class="wp-v">@creatorLabel</div>
                 </div>
             </div>
 
-            <div class="wp-cardbottom">
-                <div class="wp-actions">
-                    <NavLink class="wp-act" href="@($"/workoutplans/edit/{plan.Id}")">Edit</NavLink>
-                    <NavLink class="wp-act" href="@($"/workoutplans/delete/{plan.Id}")">Delete</NavLink>
-                </div>
-            </div>
+            <!-- ✅ Removed Edit/Delete buttons -->
         </div>
 
         <!-- EXERCISES CARD -->
@@ -127,9 +121,11 @@
     private WorkoutPlan? plan;
     private List<PlanExerciseRow> planExercises = new();
 
+    // creator display
+    private string creatorLabel = "—";
+
     protected override async Task OnInitializedAsync()
     {
-        // Load plan
         plan = await Db.WorkoutPlan
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == Id);
@@ -140,7 +136,27 @@
             return;
         }
 
-        // Load exercises via join table (NO navigation collections)
+        // ✅ Creator label:
+        // If OwnerIdentityUserId exists => show that user's email (or username if you prefer)
+        // Else => seeded/library plan
+        if (!string.IsNullOrWhiteSpace(plan.OwnerIdentityUserId))
+        {
+            // This works ONLY if your context has DbSet<The_Right_FitUser> (usually IdentityDbContext does)
+            // If your DbSet name is different, change Db.Users to Db.Set<The_Right_FitUser>()
+            var user = await Db.Set<The_Right_FitUser>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == plan.OwnerIdentityUserId);
+
+            creatorLabel = user?.Email
+                ?? user?.UserName
+                ?? plan.OwnerIdentityUserId; // fallback
+        }
+        else
+        {
+            creatorLabel = "Library / Admin (seeded)";
+        }
+
+        // Load exercises via join table
         planExercises = await Db.WorkoutPlanExercise
             .AsNoTracking()
             .Where(wpe => wpe.WorkoutPlanId == Id)
