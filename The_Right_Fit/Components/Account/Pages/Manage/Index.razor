@@ -8,29 +8,69 @@
 @inject SignInManager<The_Right_FitUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
+@inject NavigationManager Nav
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>Settings</PageTitle>
 
-<h3>Profile</h3>
-<StatusMessage />
+<div class="wp">
 
-<div class="row">
-    <div class="col-md-6">
-        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
-            </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label for="phone-number" class="form-label">Phone number</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </EditForm>
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Settings</h1>
+            <div class="wp-sub">Update your profile details.</div>
+        </div>
+
+        <a class="wp-linkbtn" href="/dashboard">
+            Back
+        </a>
     </div>
+
+    <StatusMessage />
+
+    <div class="wp-card" style="padding:18px;">
+        <div style="display:grid; gap:14px; max-width:520px;">
+
+            <!-- Username (read-only) -->
+            <div>
+                <div class="wp-label">Username</div>
+                <input class="wp-input" value="@username" disabled />
+            </div>
+
+            <!-- Phone number -->
+            <EditForm Model="Input"
+                      FormName="profile"
+                      OnValidSubmit="OnValidSubmitAsync"
+                      method="post">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-message" />
+
+                <div style="display:grid; gap:12px;">
+                    <div>
+                        <div class="wp-label">Phone number</div>
+                        <InputText @bind-Value="Input.PhoneNumber"
+                                   class="wp-input"
+                                   placeholder="Enter your phone number..." />
+                        <ValidationMessage For="() => Input.PhoneNumber" class="validation-message" />
+                    </div>
+
+                    <div class="wp-divider"></div>
+
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <button type="submit" class="wp-newbtn">
+                            Save Changes
+                        </button>
+
+                        <a class="wp-newbtn wp-linkbtn" href="/Account/Manage">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </EditForm>
+
+        </div>
+    </div>
+
 </div>
 
 @code {

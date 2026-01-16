@@ -1,17 +1,37 @@
 ﻿@inherits LayoutComponentBase
 @layout AccountLayout
 
-<h1>Manage your account</h1>
+<div class="wp">
 
-<div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
-        <div class="col-md-3">
-            <ManageNavMenu />
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Settings</h1>
+            <div class="wp-sub">Change your account settings.</div>
         </div>
-        <div class="col-md-9">
-            @Body
-        </div>
+
+        <a class="wp-newbtn wp-btn-secondary wp-text-black" href="/dashboard">
+            Back
+        </a>
+    </div>
+
+    <!-- CONTENT GRID -->
+    <div class="acc-grid">
+
+        <!-- SIDEBAR -->
+        <aside class="wp-card acc-side">
+            <div class="acc-sidehead">Manage</div>
+            <div class="acc-nav">
+                <ManageNavMenu />
+            </div>
+        </aside>
+
+        <!-- PAGE CONTENT -->
+        <main class="wp-card acc-main">
+            <div class="acc-body">
+                @Body
+            </div>
+        </main>
+
     </div>
 </div>
