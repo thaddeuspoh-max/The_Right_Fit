@@ -1,4 +1,14 @@
 ﻿@page "/dashboard"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Domain
+
+@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
 <PageTitle>Client Dashboard</PageTitle>
 
@@ -12,7 +22,6 @@
             <p class="dash-sub">Here’s your overview for today.</p>
         </div>
 
-        <!-- BIG BUTTONS (not links) -->
         <div class="dash-header-actions">
             <NavLink class="dash-btn-link" href="/workoutlogs/create">
                 <button type="button" class="dash-btn dash-btn-primary">
@@ -25,144 +34,414 @@
                     + Log Meal
                 </button>
             </NavLink>
+
+            <button type="button" class="dash-btn" @onclick="Reload" disabled="@loading">
+                @(loading ? "Refreshing..." : "Refresh")
+            </button>
         </div>
     </div>
 
-    <!-- Stats row -->
-    <div class="dash-stats">
-        <div class="dash-stat">
-            <div class="dash-stat-label">Streak</div>
-            <div class="dash-stat-value">7 days</div>
-            <div class="dash-stat-note">Keep it going</div>
+    @if (loading)
+    {
+        <div class="wp-loading">Loading dashboard…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Dashboard error</div>
+            <div class="wp-empty-sub">@error</div>
         </div>
-
-        <div class="dash-stat">
-            <div class="dash-stat-label">Calories</div>
-            <div class="dash-stat-value">1,820</div>
-            <div class="dash-stat-note">Target: 2,100</div>
-        </div>
-
-        <div class="dash-stat">
-            <div class="dash-stat-label">Protein</div>
-            <div class="dash-stat-value">118g</div>
-            <div class="dash-stat-note">Target: 130g</div>
-        </div>
-
-        <div class="dash-stat">
-            <div class="dash-stat-label">Workouts</div>
-            <div class="dash-stat-value">3 / week</div>
-            <div class="dash-stat-note">This week</div>
-        </div>
-    </div>
-
-    <!-- Grid -->
-    <div class="dash-grid">
-
-        <!-- Today's Plan -->
-        <div class="dash-card">
-            <div class="dash-card-head">
-                <div class="dash-h2">Today’s Plan</div>
-                <div class="dash-pill">Upper Body</div>
+    }
+    else
+    {
+        <!-- Stats row -->
+        <div class="dash-stats">
+            <div class="dash-stat">
+                <div class="dash-stat-label">Streak</div>
+                <div class="dash-stat-value">@($"{streakDays} days")</div>
+                <div class="dash-stat-note">@streakNote</div>
             </div>
 
-            <div class="dash-plan">
-                <div class="dash-plan-item">
-                    <div class="dash-plan-title">Bench Press</div>
-                    <div class="dash-plan-meta">4 × 8 • RPE 7</div>
+            <div class="dash-stat">
+                <div class="dash-stat-label">Calories (Today)</div>
+                <div class="dash-stat-value">@todayCaloriesText</div>
+                <div class="dash-stat-note">@todayCaloriesNote</div>
+            </div>
+
+            <div class="dash-stat">
+                <div class="dash-stat-label">Workouts</div>
+                <div class="dash-stat-value">@($"{workoutsThisWeek} / week")</div>
+                <div class="dash-stat-note">This week</div>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div class="dash-grid">
+
+            <!-- Today’s Plan -->
+            <div class="dash-card">
+                <div class="dash-card-head">
+                    <div class="dash-h2">Today’s Plan</div>
+                    <div class="dash-pill">@todayPlanTitle</div>
                 </div>
 
-                <div class="dash-plan-item">
-                    <div class="dash-plan-title">Rows</div>
-                    <div class="dash-plan-meta">4 × 10 • Controlled</div>
-                </div>
+                @if (todayPlanItems.Count == 0)
+                {
+                    <div class="dash-plan">
+                        <div class="dash-plan-item">
+                            <div class="dash-plan-title">No plan assigned</div>
+                            <div class="dash-plan-meta">Pick a plan or log a freestyle workout.</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-plan">
+                        @foreach (var item in todayPlanItems)
+                        {
+                            <div class="dash-plan-item">
+                                <div class="dash-plan-title">@item.Title</div>
+                                <div class="dash-plan-meta">@item.Meta</div>
+                            </div>
+                        }
+                    </div>
+                }
 
-                <div class="dash-plan-item">
-                    <div class="dash-plan-title">Shoulder Press</div>
-                    <div class="dash-plan-meta">3 × 8 • Moderate</div>
+                <div class="dash-card-actions">
+                    <NavLink class="dash-btn-link" href="/workoutplans">
+                        <button type="button" class="dash-btn">
+                            View Workout Plans
+                        </button>
+                    </NavLink>
                 </div>
             </div>
 
-            <div class="dash-card-actions">
-                <NavLink class="dash-btn-link" href="/workoutplans">
-                    <button type="button" class="dash-btn">
-                        View Workout Plans
+            <!-- Progress -->
+            <div class="dash-card">
+                <div class="dash-card-head">
+                    <div class="dash-h2">Progress</div>
+
+                    <button type="button"
+                            class="dash-btn"
+                            @onclick="ToggleProgressMode">
+                        @progressModeLabel
                     </button>
-                </NavLink>
-            </div>
-        </div>
-
-        <!-- Progress -->
-        <div class="dash-card">
-            <div class="dash-card-head">
-                <div class="dash-h2">Progress</div>
-                <div class="dash-pill dash-pill-soft">This Week</div>
-            </div>
-
-            <div class="dash-progress-block">
-                <div class="dash-progress-row">
-                    <div class="dash-progress-label">Workouts completed</div>
-                    <div class="dash-progress-value">3 / 5</div>
                 </div>
-                <div class="dash-bar">
-                    <div class="dash-bar-fill" style="width:60%"></div>
-                </div>
-            </div>
 
-            <div class="dash-progress-block">
-                <div class="dash-progress-row">
-                    <div class="dash-progress-label">Protein goal</div>
-                    <div class="dash-progress-value">118 / 130g</div>
-                </div>
-                <div class="dash-bar">
-                    <div class="dash-bar-fill" style="width:90%"></div>
-                </div>
-            </div>
-
-            <div class="dash-progress-block">
-                <div class="dash-progress-row">
-                    <div class="dash-progress-label">Calories</div>
-                    <div class="dash-progress-value">1,820 / 2,100</div>
-                </div>
-                <div class="dash-bar">
-                    <div class="dash-bar-fill" style="width:86%"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity (NO Session row) -->
-        <div class="dash-card dash-span-2">
-            <div class="dash-card-head">
-                <div class="dash-h2">Recent Activity</div>
-
-                <NavLink class="dash-btn-link" href="/activity">
-                    <button type="button" class="dash-btn">
-                        View All
-                    </button>
-                </NavLink>
-            </div>
-
-            <div class="dash-activity">
-                <div class="dash-activity-item">
-                    <div class="dash-dot"></div>
-                    <div>
-                        <div class="dash-activity-title">Workout</div>
-                        <div class="dash-activity-sub">Leg Day – Hypertrophy • Squats, Lunges, Calf Raises</div>
+                <div class="dash-progress-block">
+                    <div class="dash-progress-row">
+                        <div class="dash-progress-label">Workouts completed</div>
+                        <div class="dash-progress-value">@($"{progressWorkoutsDone} / {progressWorkoutsGoal}")</div>
                     </div>
-                    <div class="dash-activity-tag">Completed</div>
+                    <div class="dash-bar">
+                        <div class="dash-bar-fill" style="@($"width:{progressWorkoutsPct}%")"></div>
+                    </div>
                 </div>
 
-                <div class="dash-activity-item">
-                    <div class="dash-dot" style="background: rgba(16,185,129,1); box-shadow: 0 0 0 6px rgba(16,185,129,.14);"></div>
-                    <div>
-                        <div class="dash-activity-title">Meal Logged</div>
-                        <div class="dash-activity-sub">Breakfast • Oatmeal, Eggs, Berries</div>
+                <div class="dash-progress-block">
+                    <div class="dash-progress-row">
+                        <div class="dash-progress-label">Calories</div>
+                        <div class="dash-progress-value">@($"{todayCaloriesForBar} / {calorieGoal}")</div>
                     </div>
-                    <div class="dash-activity-tag" style="background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.2); color: rgba(5,150,105,1);">
-                        Logged
+                    <div class="dash-bar">
+                        <div class="dash-bar-fill" style="@($"width:{caloriePct}%")"></div>
                     </div>
                 </div>
             </div>
-        </div>
 
-    </div>
+            <!-- Recent Activity -->
+            <div class="dash-card dash-span-2">
+                <div class="dash-card-head">
+                    <div class="dash-h2">Recent Activity</div>
+
+                    <NavLink class="dash-btn-link" href="/activity">
+                        <button type="button" class="dash-btn">
+                            View All
+                        </button>
+                    </NavLink>
+                </div>
+
+                @if (recent.Count == 0)
+                {
+                    <div class="dash-activity">
+                        <div class="dash-activity-item">
+                            <div class="dash-dot"></div>
+                            <div>
+                                <div class="dash-activity-title">No recent activity</div>
+                                <div class="dash-activity-sub">Log a workout or meal to see it here.</div>
+                            </div>
+                            <div class="dash-activity-tag">New</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="dash-activity">
+                        @foreach (var a in recent)
+                        {
+                            <div class="dash-activity-item">
+                                <div class="dash-dot" style="@a.DotStyle"></div>
+                                <div>
+                                    <div class="dash-activity-title">@a.Title</div>
+                                    <div class="dash-activity-sub">@a.Subtitle</div>
+                                </div>
+                                <div class="dash-activity-tag" style="@a.TagStyle">@a.Tag</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+        </div>
+    }
 </div>
+
+@code {
+    private bool loading = true;
+    private string? error;
+
+    private string? identityUserId;
+
+    // Stats
+    private int streakDays;
+    private string streakNote = "Keep it going";
+
+    private int workoutsThisWeek;
+
+    // Calories (today)
+    private int calorieGoal = 2100;
+    private int todayCalories;
+
+    private string todayCaloriesText = "—";
+    private string todayCaloriesNote = "";
+
+    // Progress toggle
+    private enum ProgressMode { Week, Month }
+    private ProgressMode progressMode = ProgressMode.Week;
+    private string progressModeLabel => progressMode == ProgressMode.Week ? "This Week" : "This Month";
+
+    private int progressWorkoutsDone;
+    private int progressWorkoutsGoal = 5;
+    private int progressWorkoutsPct;
+
+    private int todayCaloriesForBar => Math.Max(0, todayCalories);
+    private int caloriePct => Percent(todayCaloriesForBar, calorieGoal);
+
+    // Today plan
+    private string todayPlanTitle = "Today";
+    private List<PlanItem> todayPlanItems = new();
+
+    // Recent activity
+    private List<ActivityItem> recent = new();
+
+    private record PlanItem(string Title, string Meta);
+
+    private record ActivityItem(
+        string Title,
+        string Subtitle,
+        string Tag,
+        string DotStyle,
+        string TagStyle
+    );
+
+    protected override async Task OnInitializedAsync()
+        => await Load();
+
+    private async Task Reload()
+        => await Load();
+
+    private async Task Load()
+    {
+        loading = true;
+        error = null;
+
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Account/Login", true);
+                return;
+            }
+
+            identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(identityUserId))
+            {
+                error = "Cannot read your user id.";
+                return;
+            }
+
+            using var db = DbFactory.CreateDbContext();
+
+            var today = DateTime.Today;
+            var last30 = today.AddDays(-30);
+
+            var workoutLogs = await db.WorkoutLog
+                .AsNoTracking()
+                .Where(x => x.OwnerIdentityUserId == identityUserId)
+                .Where(x => x.WorkoutDateTime >= last30)
+                .OrderByDescending(x => x.WorkoutDateTime)
+                .ToListAsync();
+
+            var weekStart = StartOfWeek(today, DayOfWeek.Monday);
+            var weekEnd = weekStart.AddDays(7);
+
+            workoutsThisWeek = workoutLogs.Count(x =>
+                x.WorkoutDateTime >= weekStart && x.WorkoutDateTime < weekEnd);
+
+            var dietLogs = await db.DietLog
+                .AsNoTracking()
+                .Where(x => x.OwnerIdentityUserId == identityUserId)
+                .Where(x => x.LogDate >= last30)
+                .OrderByDescending(x => x.LogDate)
+                .ToListAsync();
+
+            todayCalories = dietLogs
+                .Where(x => x.LogDate.Date == today)
+                .Sum(x => x.TotalCalories);
+
+            todayCaloriesText = todayCalories > 0 ? todayCalories.ToString("N0") : "—";
+            todayCaloriesNote = todayCalories > 0 ? $"Target: {calorieGoal:N0}" : "No meals logged";
+
+            var activeDates = new HashSet<DateTime>();
+
+            foreach (var w in workoutLogs)
+                activeDates.Add(w.WorkoutDateTime.Date);
+
+            foreach (var d in dietLogs)
+                activeDates.Add(d.LogDate.Date);
+
+            streakDays = 0;
+            for (var d = today; ; d = d.AddDays(-1))
+            {
+                if (!activeDates.Contains(d)) break;
+                streakDays++;
+            }
+
+            streakNote = streakDays >= 7 ? "Nice streak 🔥" : "Keep it going";
+
+            ComputeProgress(workoutLogs);
+            await BuildTodayPlan(db, workoutLogs);
+
+            // ✅ now typed correctly
+            BuildRecentActivity(workoutLogs, dietLogs);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ToggleProgressMode()
+    {
+        progressMode = progressMode == ProgressMode.Week ? ProgressMode.Month : ProgressMode.Week;
+        _ = Load();
+    }
+
+    private void ComputeProgress(List<WorkoutLog> workoutLogs)
+    {
+        var today = DateTime.Today;
+
+        DateTime start;
+        DateTime end;
+
+        if (progressMode == ProgressMode.Week)
+        {
+            start = StartOfWeek(today, DayOfWeek.Monday);
+            end = start.AddDays(7);
+            progressWorkoutsGoal = 5;
+        }
+        else
+        {
+            start = new DateTime(today.Year, today.Month, 1);
+            end = start.AddMonths(1);
+            progressWorkoutsGoal = 20;
+        }
+
+        progressWorkoutsDone = workoutLogs.Count(x => x.WorkoutDateTime >= start && x.WorkoutDateTime < end);
+        progressWorkoutsPct = Percent(progressWorkoutsDone, progressWorkoutsGoal);
+    }
+
+    private async Task BuildTodayPlan(The_Right_Fit.Data.The_Right_FitContext db, List<WorkoutLog> workoutLogs)
+    {
+        todayPlanItems.Clear();
+
+        var latest = workoutLogs.FirstOrDefault();
+        if (latest is null)
+        {
+            todayPlanTitle = "Today";
+            return;
+        }
+
+        todayPlanTitle = latest.WorkoutPlanId is null ? "Freestyle" : $"Plan #{latest.WorkoutPlanId}";
+
+        var ex = await db.WorkoutLogExercise
+            .AsNoTracking()
+            .Where(x => x.WorkoutLogId == latest.Id)
+            .ToListAsync();
+
+        if (ex.Count == 0)
+            return;
+
+        var ids = ex.Select(x => x.ExerciseId).Distinct().ToList();
+        var nameMap = await db.Exercise
+            .AsNoTracking()
+            .Where(x => ids.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.ExerciseName);
+
+        foreach (var row in ex.Take(3))
+        {
+            var name = nameMap.TryGetValue(row.ExerciseId, out var n) ? n : $"Exercise #{row.ExerciseId}";
+            todayPlanItems.Add(new PlanItem(name, $"{row.ActualSets} sets • {row.ActualReps} reps"));
+        }
+    }
+
+    // ✅ FIXED: strongly typed DietLog list
+    private void BuildRecentActivity(List<WorkoutLog> workoutLogs, List<DietLog> dietLogs)
+    {
+        recent.Clear();
+
+        foreach (var w in workoutLogs.Take(2))
+        {
+            recent.Add(new ActivityItem(
+                Title: "Workout",
+                Subtitle: $"{w.WorkoutDateTime:ddd, dd MMM} • {w.DurationMinutes} min",
+                Tag: "Completed",
+                DotStyle: "",
+                TagStyle: ""
+            ));
+        }
+
+        foreach (var d in dietLogs.Take(2))
+        {
+            var meal = string.IsNullOrWhiteSpace(d.MealType) ? "Meal" : d.MealType;
+
+            recent.Add(new ActivityItem(
+                Title: "Meal Logged",
+                Subtitle: $"{meal} • {d.LogDate:ddd, dd MMM} • {d.TotalCalories} kcal",
+                Tag: "Logged",
+                DotStyle: "background: rgba(16,185,129,1); box-shadow: 0 0 0 6px rgba(16,185,129,.14);",
+                TagStyle: "background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.2); color: rgba(5,150,105,1);"
+            ));
+        }
+    }
+
+    private static DateTime StartOfWeek(DateTime dt, DayOfWeek startOfWeek)
+    {
+        int diff = (7 + (dt.DayOfWeek - startOfWeek)) % 7;
+        return dt.AddDays(-1 * diff).Date;
+    }
+
+    private static int Percent(int value, int goal)
+    {
+        if (goal <= 0) return 0;
+        var pct = (int)Math.Round((double)value * 100.0 / goal);
+        return Math.Clamp(pct, 0, 100);
+    }
+}
