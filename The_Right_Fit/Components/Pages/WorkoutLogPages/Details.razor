@@ -1,62 +1,186 @@
-﻿@page "/workoutlogs/details"
+﻿@page "/workoutlogs/details/{Id:int}"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
 @inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@inject NavigationManager Nav
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Workout Log Details</PageTitle>
 
-<h1>Details</h1>
+<div class="wp">
 
-<div>
-    <h2>WorkoutLog</h2>
-    <hr />
-    @if (workoutlog is null)
-    {
-        <p><em>Loading...</em></p>
-    }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">UserId</dt>
-            <dd class="col-sm-10">@workoutlog.UserId</dd>
-            <dt class="col-sm-2">WorkoutPlanId</dt>
-            <dd class="col-sm-10">@workoutlog.WorkoutPlanId</dd>
-            <dt class="col-sm-2">WorkoutDateTime</dt>
-            <dd class="col-sm-10">@workoutlog.WorkoutDateTime</dd>
-            <dt class="col-sm-2">DurationMinutes</dt>
-            <dd class="col-sm-10">@workoutlog.DurationMinutes</dd>
-            <dt class="col-sm-2">Notes</dt>
-            <dd class="col-sm-10">@workoutlog.Notes</dd>
-            <dt class="col-sm-2">DateCreated</dt>
-            <dd class="col-sm-10">@workoutlog.DateCreated</dd>
-            <dt class="col-sm-2">DateUpdated</dt>
-            <dd class="col-sm-10">@workoutlog.DateUpdated</dd>
-            <dt class="col-sm-2">CreatedBy</dt>
-            <dd class="col-sm-10">@workoutlog.CreatedBy</dd>
-            <dt class="col-sm-2">UpdatedBy</dt>
-            <dd class="col-sm-10">@workoutlog.UpdatedBy</dd>
-        </dl>
+    <div class="wp-head">
         <div>
-            <a href="@($"/workoutlogs/edit?id={workoutlog.Id}")">Edit</a> |
-            <a href="@($"/workoutlogs")">Back to List</a>
+            <h1 class="wp-title">Workout Log</h1>
+            <div class="wp-sub">View what you recorded for this session.</div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <NavLink class="wp-linkbtn" href="/workoutlogs">Back</NavLink>
+
+            <!-- ✅ FIXED: use route param -->
+            <NavLink class="wp-linkbtn" href="@($"/workoutlogs/edit/{Id}")">Edit</NavLink>
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="wp-loading">Loading workout log…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot load workout log</div>
+            <div class="wp-empty-sub">@error</div>
         </div>
     }
+    else if (log is null)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">This workout log does not exist.</div>
+        </div>
+    }
+    else
+    {
+        <div class="wld-grid">
+
+            <!-- SUMMARY CARD -->
+            <div class="wp-card" style="padding:18px;">
+                <div class="wld-top">
+                    <span class="wld-pill">Session</span>
+                    <span class="wld-date">@log.WorkoutDateTime.ToString("ddd, dd MMM yyyy • h:mm tt")</span>
+                </div>
+
+                <div class="wld-kpis">
+                    <div class="wld-kpi">
+                        <div class="wp-label">Duration</div>
+                        <div class="wld-kpiv">@log.DurationMinutes min</div>
+                    </div>
+
+                    <div class="wld-kpi">
+                        <div class="wp-label">Exercises</div>
+                        <div class="wld-kpiv">@rows.Count</div>
+                    </div>
+
+                    <div class="wld-kpi">
+                        <div class="wp-label">Plan</div>
+                        <div class="wld-kpiv">
+                            @(log.WorkoutPlanId is null ? "No plan" : $"Plan #{log.WorkoutPlanId}")
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="wp-divider" style="margin:14px 0;" />
+
+                <div>
+                    <div class="wp-label">Notes</div>
+                    <div class="wld-notes">
+                        @(string.IsNullOrWhiteSpace(log.Notes) ? "—" : log.Notes)
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXERCISES CARD -->
+            <div class="wp-card" style="padding:18px;">
+                <div class="wld-h">Logged Exercises</div>
+                <div class="wp-sub">Actual sets and reps recorded for each exercise.</div>
+
+                @if (rows.Count == 0)
+                {
+                    <div class="wp-empty" style="margin-top:14px;">
+                        <div class="wp-empty-title">No exercises logged</div>
+                        <div class="wp-empty-sub">This log does not have any exercises saved.</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="wld-list">
+                        @foreach (var r in rows)
+                        {
+                            <div class="wld-item" @key="r.ExerciseId">
+                                <div>
+                                    <div class="wld-ex">@r.ExerciseName</div>
+                                    <div class="wld-meta">
+                                        <span><b>@r.ActualSets</b> sets</span>
+                                        <span class="wld-dot">•</span>
+                                        <span>reps: <b>@(string.IsNullOrWhiteSpace(r.ActualReps) ? "—" : r.ActualReps)</b></span>
+                                    </div>
+                                </div>
+
+                                <div class="wld-badge">
+                                    #@r.ExerciseId
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+        </div>
+    }
+
 </div>
 
 @code {
-    private WorkoutLog? workoutlog;
+    [Parameter] public int Id { get; set; }
 
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    private bool loading = true;
+    private string? error;
+
+    private WorkoutLog? log;
+
+    private List<RowVm> rows = new();
+
+    private class RowVm
+    {
+        public int ExerciseId { get; set; }
+        public string ExerciseName { get; set; } = "";
+
+        public int ActualSets { get; set; }
+        public string? ActualReps { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        workoutlog = await context.WorkoutLog.FirstOrDefaultAsync(m => m.Id == Id);
+        loading = true;
+        error = null;
 
-        if (workoutlog is null)
+        try
         {
-            NavigationManager.NavigateTo("notfound");
+            using var db = DbFactory.CreateDbContext();
+
+            log = await db.WorkoutLog
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == Id);
+
+            if (log is null)
+            {
+                loading = false;
+                return;
+            }
+
+            rows = await (
+                from wle in db.WorkoutLogExercise.AsNoTracking()
+                join ex in db.Exercise.AsNoTracking()
+                    on wle.ExerciseId equals ex.Id
+                where wle.WorkoutLogId == Id
+                orderby ex.ExerciseName
+                select new RowVm
+                {
+                    ExerciseId = ex.Id,
+                    ExerciseName = ex.ExerciseName,
+                    ActualSets = wle.ActualSets,
+                    ActualReps = wle.ActualReps
+                }
+            ).ToListAsync();
         }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+
+        loading = false;
     }
 }

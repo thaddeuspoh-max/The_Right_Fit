@@ -1,44 +1,194 @@
 ﻿@page "/workoutlogs"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.QuickGrid
-@using The_Right_Fit.Domain
 @using The_Right_Fit.Data
-@implements IAsyncDisposable
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@using The_Right_Fit.Domain
+@inject The_Right_FitContext Db
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Workout Logs</PageTitle>
 
-<h1>Index</h1>
+<div class="wp">
 
-<p>
-    <a href="workoutlogs/create">Create New</a>
-</p>
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Workout Logs</h1>
+            <div class="wp-sub">Track your training history, time, and notes.</div>
+        </div>
 
-<QuickGrid Class="table" Items="context.WorkoutLog">
-    <PropertyColumn Property="workoutlog => workoutlog.UserId" />
-    <PropertyColumn Property="workoutlog => workoutlog.WorkoutPlanId" />
-    <PropertyColumn Property="workoutlog => workoutlog.WorkoutDateTime" />
-    <PropertyColumn Property="workoutlog => workoutlog.DurationMinutes" />
-    <PropertyColumn Property="workoutlog => workoutlog.Notes" />
-    <PropertyColumn Property="workoutlog => workoutlog.DateCreated" />
-    <PropertyColumn Property="workoutlog => workoutlog.DateUpdated" />
-    <PropertyColumn Property="workoutlog => workoutlog.CreatedBy" />
-    <PropertyColumn Property="workoutlog => workoutlog.UpdatedBy" />
+        <NavLink class="wp-newbtn" href="/workoutlogs/create">
+            <span class="wp-plus">+</span>
+            New Log
+        </NavLink>
+    </div>
 
-    <TemplateColumn Context="workoutlog">
-        <a href="@($"workoutlogs/edit?id={workoutlog.Id}")">Edit</a> |
-        <a href="@($"workoutlogs/details?id={workoutlog.Id}")">Details</a> |
-        <a href="@($"workoutlogs/delete?id={workoutlog.Id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
+    <!-- FILTERS -->
+    <div class="wl-filters">
 
-@code {
-    private The_Right_FitContext context = default!;
+        <div class="wl-filter">
+            <div class="wp-label">From</div>
+            <InputDate class="wl-input" @bind-Value="fromDate" />
+        </div>
 
-    protected override void OnInitialized()
+        <div class="wl-filter">
+            <div class="wp-label">To</div>
+            <InputDate class="wl-input" @bind-Value="toDate" />
+        </div>
+
+        <div class="wl-filter">
+            <div class="wp-label">Min Duration</div>
+            <select class="wl-select" @bind="minDurationText">
+                <option value="">Any</option>
+                <option value="15">15 min</option>
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">60 min</option>
+                <option value="90">90 min</option>
+            </select>
+        </div>
+
+        <div class="wl-filter">
+            <div class="wp-label">Search Notes</div>
+            <div class="wl-searchbox">
+                <span class="wl-searchicon">🔍</span>
+                <input class="wl-input"
+                       placeholder="Search notes..."
+                       @bind="search"
+                       @bind:event="oninput" />
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONTENT -->
+    @if (loading)
     {
-        context = DbFactory.CreateDbContext();
+        <div class="wp-loading">Loading workout logs…</div>
+    }
+    else if (FilteredLogs.Count == 0)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">No workout logs found</div>
+            <div class="wp-empty-sub">Try adjusting filters or create a new log.</div>
+        </div>
+    }
+    else
+    {
+        <div class="wl-grid">
+            @foreach (var x in FilteredLogs)
+            {
+                <div class="wl-card">
+
+                    <div class="wl-cardtop">
+                        <span class="wl-tag">
+                            @(x.WorkoutPlanId is null ? "No plan" : $"Plan #{x.WorkoutPlanId}")
+                        </span>
+
+                        <span class="wl-date">@x.WorkoutDateTime.ToString("dd MMM yyyy")</span>
+                    </div>
+
+                    <div class="wl-main">
+                        <div class="wl-duration">
+                            <span class="wl-clock">⏱</span>
+                            <span class="wl-duration-text">@x.DurationMinutes min</span>
+                        </div>
+
+                        <div class="wl-notes">
+                            @SafeShort(x.Notes, "No notes added.")
+                        </div>
+                    </div>
+
+                    <div class="wl-cardbottom">
+
+                        <!-- View details as primary button -->
+                        <NavLink class="wp-newbtn wl-viewbtn" href="@($"/workoutlogs/details/{x.Id}")">
+                            View Details
+                        </NavLink>
+
+
+                        <div class="wl-actions">
+                            <!-- Use global wp button styles so they don't look like hyperlinks -->
+                            <NavLink class="wp-linkbtn" href="@($"/workoutlogs/edit/{x.Id}")">
+                                Edit
+                            </NavLink>
+
+                            <NavLink class="wp-linkbtn wp-linkbtn-danger" href="@($"/workoutlogs/delete/{x.Id}")">
+                                Delete
+                            </NavLink>
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+        </div>
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+</div>
+
+@code {
+    private bool loading = true;
+    private List<WorkoutLog> allLogs = new();
+
+    // filters
+    private DateTime? fromDate;
+    private DateTime? toDate;
+    private string? minDurationText = "";
+    private string search = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+
+        allLogs = await Db.WorkoutLog
+            .AsNoTracking()
+            .OrderByDescending(x => x.WorkoutDateTime)
+            .ThenByDescending(x => x.Id)
+            .ToListAsync();
+
+        loading = false;
+    }
+
+    private List<WorkoutLog> FilteredLogs
+    {
+        get
+        {
+            IEnumerable<WorkoutLog> q = allLogs;
+
+            if (fromDate.HasValue)
+            {
+                var fd = fromDate.Value.Date;
+                q = q.Where(x => x.WorkoutDateTime >= fd);
+            }
+
+            if (toDate.HasValue)
+            {
+                var td = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                q = q.Where(x => x.WorkoutDateTime <= td);
+            }
+
+            if (!string.IsNullOrWhiteSpace(minDurationText) &&
+                int.TryParse(minDurationText, out var md))
+            {
+                q = q.Where(x => x.DurationMinutes >= md);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(x => (x.Notes ?? "")
+                    .Contains(s, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return q.ToList();
+        }
+    }
+
+    private static string SafeShort(string? v, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(v)) return fallback;
+        var t = v.Trim();
+        return t.Length <= 120 ? t : (t.Substring(0, 120) + "…");
+    }
 }

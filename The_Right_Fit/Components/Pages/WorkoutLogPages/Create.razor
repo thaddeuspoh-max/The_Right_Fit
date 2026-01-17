@@ -1,84 +1,371 @@
 ﻿@page "/workoutlogs/create"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
 @inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@inject NavigationManager Nav
 
-<PageTitle>Create</PageTitle>
+<PageTitle>New Workout Log</PageTitle>
 
-<h1>Create</h1>
+<div class="wp">
 
-<h2>WorkoutLog</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm method="post" Model="WorkoutLog" OnValidSubmit="AddWorkoutLog" FormName="create" Enhance>
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="userid" class="form-label">UserId:</label> 
-                <InputNumber id="userid" @bind-Value="WorkoutLog.UserId" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.UserId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="workoutplanid" class="form-label">WorkoutPlanId:</label> 
-                <InputNumber id="workoutplanid" @bind-Value="WorkoutLog.WorkoutPlanId" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.WorkoutPlanId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="workoutdatetime" class="form-label">WorkoutDateTime:</label> 
-                <InputDate id="workoutdatetime" @bind-Value="WorkoutLog.WorkoutDateTime" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.WorkoutDateTime" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="durationminutes" class="form-label">DurationMinutes:</label> 
-                <InputNumber id="durationminutes" @bind-Value="WorkoutLog.DurationMinutes" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.DurationMinutes" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="notes" class="form-label">Notes:</label> 
-                <InputText id="notes" @bind-Value="WorkoutLog.Notes" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.Notes" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datecreated" class="form-label">DateCreated:</label> 
-                <InputDate id="datecreated" @bind-Value="WorkoutLog.DateCreated" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.DateCreated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="dateupdated" class="form-label">DateUpdated:</label> 
-                <InputDate id="dateupdated" @bind-Value="WorkoutLog.DateUpdated" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.DateUpdated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="createdby" class="form-label">CreatedBy:</label> 
-                <InputText id="createdby" @bind-Value="WorkoutLog.CreatedBy" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.CreatedBy" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="updatedby" class="form-label">UpdatedBy:</label> 
-                <InputText id="updatedby" @bind-Value="WorkoutLog.UpdatedBy" class="form-control" /> 
-                <ValidationMessage For="() => WorkoutLog.UpdatedBy" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">New Workout Log</h1>
+            <div class="wp-sub">Pick exercises, enter actual sets/reps, and record duration.</div>
+        </div>
+
+        <NavLink class="wp-linkbtn" href="/workoutlogs">Back</NavLink>
     </div>
-</div>
 
-<div>
-    <a href="/workoutlogs">Back to List</a>
+    @if (loading)
+    {
+        <div class="wp-loading">Loading exercises…</div>
+    }
+    else
+    {
+        <EditForm Model="form" OnValidSubmit="Save">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="wlog-grid">
+
+                <!-- LEFT: Selected exercises -->
+                <div class="wp-card" style="padding:18px;">
+
+                    <div class="wlog-sectionhead">
+                        <div>
+                            <div class="wlog-h">Selected Exercises</div>
+                            <div class="wp-sub">Add exercises and fill your actual performance.</div>
+                        </div>
+
+                        <div class="wlog-mini">
+                            <div class="wp-label">Duration (min)</div>
+                            <input class="wp-input wlog-box"
+                                   type="number" min="1"
+                                   @bind="form.DurationMinutes" />
+                        </div>
+                    </div>
+
+                    @if (rows.Count == 0)
+                    {
+                        <div class="wp-empty" style="margin-top:14px;">
+                            <div class="wp-empty-title">No exercises added</div>
+                            <div class="wp-empty-sub">Use the picker on the right to add exercises.</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="display:grid; gap:10px; margin-top:14px;">
+                            @foreach (var r in rows)
+                            {
+                                <div class="wlog-rowcard" @key="r.ExerciseId">
+
+                                    <div>
+                                        <div class="wp-label">Exercise</div>
+                                        <div class="wlog-exname">@r.ExerciseName</div>
+                                    </div>
+
+                                    <div>
+                                        <div class="wp-label">Actual Sets</div>
+                                        <input class="wp-input wlog-box"
+                                               type="number" min="1"
+                                               @bind="r.ActualSets" />
+                                    </div>
+
+                                    <div>
+                                        <div class="wp-label">Actual Reps (per set)</div>
+                                        <input class="wp-input wlog-box"
+                                               placeholder="e.g. 12, 10, 8"
+                                               @bind="r.ActualReps" />
+                                    </div>
+
+                                    <div class="wlog-removewrap">
+                                        <button type="button"
+                                                class="wp-linkbtn wp-btn-secondary-black"
+                                                @onclick="@(() => Remove(r.ExerciseId))">
+                                            Remove
+                                        </button>
+                                    </div>
+
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <hr class="wp-divider" style="margin:16px 0;" />
+
+                    <div>
+                        <div class="wp-label">Notes (optional)</div>
+                        <textarea class="wp-input wlog-box wlog-notes"
+                                  placeholder="How was the workout?"
+                                  @bind="form.Notes"></textarea>
+                    </div>
+
+                    <div class="wlog-actions">
+                        <button class="wp-newbtn" type="submit" disabled="@saving">
+                            @(saving ? "Saving..." : "Save Log")
+                        </button>
+
+                        <button type="button"
+                                class="wp-newbtn wp-btn-secondary-black"
+                                @onclick="@(() => Nav.NavigateTo("/workoutlogs"))">
+                            Cancel
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        <div class="wlog-error">@error</div>
+                    }
+                </div>
+
+                <!-- RIGHT: Exercise picker -->
+                <div class="wp-card" style="padding:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+                        <div>
+                            <div class="wlog-h">Exercise Picker</div>
+                            <div class="wp-sub">Search and add exercises.</div>
+                        </div>
+                        <div class="wp-sub">Showing @FilteredExercises.Count of @allExercises.Count</div>
+                    </div>
+
+                    <div class="wlog-pickerfilters">
+                        <div style="flex:1; min-width:220px;">
+                            <div class="wp-label">Search</div>
+                            <input class="wp-input wlog-box"
+                                   placeholder="Search exercises..."
+                                   @bind="exerciseSearch"
+                                   @bind:event="oninput" />
+                        </div>
+
+                        <div style="min-width:220px;">
+                            <div class="wp-label">Muscle Group</div>
+                            <select class="wp-select" @bind="selectedMuscleGroup">
+                                <option value="">All muscle groups</option>
+                                @foreach (var mg in muscleGroups)
+                                {
+                                    <option value="@mg">@mg</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="wlog-exlist">
+                        @foreach (var ex in FilteredExercises)
+                        {
+                            var added = rows.Any(x => x.ExerciseId == ex.Id);
+
+                            <div class="wlog-exitem" @key="ex.Id">
+                                <span>
+                                    <b>@ex.ExerciseName</b>
+                                    @if (!string.IsNullOrWhiteSpace(GetMuscleGroup(ex)))
+                                    {
+                                        <span class="wlog-muted"> (@GetMuscleGroup(ex))</span>
+                                    }
+                                </span>
+
+                                <button type="button"
+                                        class="wp-newbtn"
+                                        style="padding:10px 12px;"
+                                        disabled="@added"
+                                        @onclick="@(() => Add(ex))">
+                                    @(added ? "Added" : "Add")
+                                </button>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="wp-sub" style="margin-top:12px;">
+                        Tip: You can edit sets/reps after adding an exercise.
+                    </div>
+                </div>
+
+            </div>
+        </EditForm>
+    }
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private WorkoutLog WorkoutLog { get; set; } = new();
+    private bool loading = true;
+    private bool saving = false;
+    private string? error;
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task AddWorkoutLog()
+    private List<Exercise> allExercises = new();
+    private List<string> muscleGroups = new();
+
+    private string exerciseSearch = "";
+    private string selectedMuscleGroup = "";
+
+    // user-editable values
+    private LogForm form = new()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.WorkoutLog.Add(WorkoutLog);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/workoutlogs");
+        DurationMinutes = 30
+    };
+
+    // selected exercises
+    private List<LogRow> rows = new();
+
+    private class LogForm
+    {
+        public int DurationMinutes { get; set; } = 30;
+        public string? Notes { get; set; }
+    }
+
+    private class LogRow
+    {
+        public int ExerciseId { get; set; }
+        public string ExerciseName { get; set; } = "";
+
+        // ✅ MATCH YOUR DOMAIN MODEL
+        public int ActualSets { get; set; } = 3;
+        public string ActualReps { get; set; } = "12, 10, 8";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+
+        using var db = DbFactory.CreateDbContext();
+
+        allExercises = await db.Exercise
+            .AsNoTracking()
+            .OrderBy(x => x.ExerciseName)
+            .ToListAsync();
+
+        muscleGroups = allExercises
+            .Select(e => (GetMuscleGroup(e) ?? "").Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        loading = false;
+    }
+
+    // If Exercise has MuscleGroup, you can replace with: => ex.MuscleGroup;
+    private static string? GetMuscleGroup(Exercise ex)
+        => ex.GetType().GetProperty("MuscleGroup")?.GetValue(ex) as string;
+
+    private List<Exercise> FilteredExercises
+    {
+        get
+        {
+            IEnumerable<Exercise> q = allExercises;
+
+            if (!string.IsNullOrWhiteSpace(selectedMuscleGroup))
+            {
+                var mg = selectedMuscleGroup.Trim();
+                q = q.Where(e => (GetMuscleGroup(e) ?? "").Trim()
+                    .Equals(mg, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(exerciseSearch))
+            {
+                var s = exerciseSearch.Trim();
+                q = q.Where(e => (e.ExerciseName ?? "")
+                    .Contains(s, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return q.ToList();
+        }
+    }
+
+    private void Add(Exercise ex)
+    {
+        if (rows.Any(x => x.ExerciseId == ex.Id)) return;
+
+        rows.Add(new LogRow
+        {
+            ExerciseId = ex.Id,
+            ExerciseName = ex.ExerciseName,
+            ActualSets = 3,
+            ActualReps = "12, 10, 8"
+        });
+    }
+
+    private void Remove(int exerciseId)
+    {
+        var row = rows.FirstOrDefault(x => x.ExerciseId == exerciseId);
+        if (row != null) rows.Remove(row);
+    }
+
+    private async Task Save()
+    {
+        error = null;
+
+        if (rows.Count == 0)
+        {
+            error = "Please add at least 1 exercise.";
+            return;
+        }
+
+        if (form.DurationMinutes <= 0)
+        {
+            error = "Duration must be more than 0 minutes.";
+            return;
+        }
+
+        if (rows.Any(r => r.ActualSets <= 0))
+        {
+            error = "Each exercise must have at least 1 set.";
+            return;
+        }
+
+        if (rows.Any(r => string.IsNullOrWhiteSpace(r.ActualReps)))
+        {
+            error = "Please enter reps for each exercise (e.g. 12, 10, 8).";
+            return;
+        }
+
+        saving = true;
+
+        using var db = DbFactory.CreateDbContext();
+
+        // ✅ Replace this with your real mapping later
+        int currentUserId = 1;
+
+        var now = DateTime.Now;
+
+        var log = new WorkoutLog
+        {
+            UserId = currentUserId,
+            WorkoutPlanId = null,
+            WorkoutDateTime = now,
+            DurationMinutes = form.DurationMinutes,
+            Notes = form.Notes,
+
+            DateCreated = now,
+            DateUpdated = now,
+            CreatedBy = "System",
+            UpdatedBy = "System"
+        };
+
+        db.WorkoutLog.Add(log);
+        await db.SaveChangesAsync();
+
+        foreach (var r in rows)
+        {
+            db.WorkoutLogExercise.Add(new WorkoutLogExercise
+            {
+                WorkoutLogId = log.Id,
+                ExerciseId = r.ExerciseId,
+
+                // ✅ CORRECT PROPERTY NAMES
+                ActualSets = r.ActualSets,
+                ActualReps = r.ActualReps,
+
+                DateCreated = now,
+                DateUpdated = now,
+                CreatedBy = "System",
+                UpdatedBy = "System"
+            });
+        }
+
+        await db.SaveChangesAsync();
+
+        saving = false;
+        Nav.NavigateTo("/workoutlogs");
     }
 }
