@@ -1,44 +1,266 @@
 ﻿@page "/fooditems"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using The_Right_Fit.Domain
 @using The_Right_Fit.Data
+
 @implements IAsyncDisposable
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject IDbContextFactory<The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Food Items</PageTitle>
 
-<h1>Index</h1>
+<div class="wp">
 
-<p>
-    <a href="fooditems/create">Create New</a>
-</p>
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Food Items</h1>
+            <div class="wp-sub">Standard foods and your own custom foods.</div>
+        </div>
 
-<QuickGrid Class="table" Items="context.FoodItems">
-    <PropertyColumn Property="fooditems => fooditems.Name" />
-    <PropertyColumn Property="fooditems => fooditems.ServingSizeDescription" />
-    <PropertyColumn Property="fooditems => fooditems.Calories" />
-    <PropertyColumn Property="fooditems => fooditems.IsCustom" />
-    <PropertyColumn Property="fooditems => fooditems.CreatedByUserId" />
-    <PropertyColumn Property="fooditems => fooditems.DateCreated" />
-    <PropertyColumn Property="fooditems => fooditems.DateUpdated" />
-    <PropertyColumn Property="fooditems => fooditems.CreatedBy" />
-    <PropertyColumn Property="fooditems => fooditems.UpdatedBy" />
+        <!-- visible to all logged-in users -->
+        <a class="wp-newbtn" href="/fooditems/create">
+            <span class="wp-plus">+</span>
+            Add Custom Food Item
+        </a>
+    </div>
 
-    <TemplateColumn Context="fooditems">
-        <a href="@($"fooditems/edit?id={fooditems.Id}")">Edit</a> |
-        <a href="@($"fooditems/details?id={fooditems.Id}")">Details</a> |
-        <a href="@($"fooditems/delete?id={fooditems.Id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
+    @if (isLoading)
+    {
+        <div class="wp-loading">Loading food items…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Error</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else
+    {
+        <!-- FILTERS -->
+        <div class="wp-tools">
+            <div class="wp-searchbox wp-searchwide">
+                <span class="wp-searchicon">🔍</span>
+                <input class="wp-input"
+                       placeholder="Search by name or serving size…"
+                       value="@search"
+                       @oninput="OnSearchInput" />
+            </div>
+
+            <div class="wp-filter">
+                <div class="wp-label">Type</div>
+                <select class="wp-select"
+                        value="@typeFilter"
+                        @onchange="OnTypeChanged">
+                    <option value="">All</option>
+                    <option value="custom">Custom</option>
+                    <option value="standard">Standard</option>
+                </select>
+            </div>
+
+            <button class="wp-newbtn wp-btn-secondary"
+                    type="button"
+                    @onclick="ClearFilters">
+                Clear
+            </button>
+        </div>
+
+        <!-- TABLE -->
+        <div class="wp-card wp-tablecard">
+            <QuickGrid Class="wp-table"
+                       Items="FilteredList.AsQueryable()"
+                       RowClass="RowClass"
+                       @key="gridKey">
+
+                <TemplateColumn Title="Food" Context="f">
+                    <div class="ex-cell ex-title">@f.Name</div>
+
+                    @if (!string.IsNullOrWhiteSpace(f.ServingSizeDescription))
+                    {
+                        <div class="wp-cell-muted" style="margin-top:2px;">
+                            @f.ServingSizeDescription
+                        </div>
+                    }
+                </TemplateColumn>
+
+                <TemplateColumn Title="Calories" Context="f">
+                    <div class="ex-cell">
+                        <span class="wp-pill">@($"{f.Calories:0}") kcal</span>
+                    </div>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Type" Context="f">
+                    <div class="ex-cell">
+                        <span class="wp-pill">@(f.IsCustom == 1 ? "Custom" : "Standard")</span>
+                    </div>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Actions" Context="f">
+                    <div class="ex-actions">
+                        <a class="wp-newbtn"
+                           href="@($"/fooditems/details/{f.Id}")">
+                            Details
+                        </a>
+
+                        @if (CanEdit(f))
+                        {
+                            <a class="wp-linkbtn"
+                               href="@($"/fooditems/edit/{f.Id}")">
+                                Edit
+                            </a>
+                            <a class="wp-linkbtn wp-linkbtn-danger"
+                               href="@($"/fooditems/delete/{f.Id}")">
+                                Delete
+                            </a>
+                        }
+                    </div>
+                </TemplateColumn>
+
+            </QuickGrid>
+        </div>
+
+        @if (!FilteredList.Any())
+        {
+            <div class="wp-empty">
+                <div class="wp-empty-title">No food items found</div>
+                <div class="wp-empty-sub">Try adjusting your filters.</div>
+            </div>
+        }
+    }
+</div>
 
 @code {
-    private The_Right_Fit.Data.The_Right_FitContext context = default!;
+    private The_Right_FitContext? db;
 
-    protected override void OnInitialized()
+    private bool isLoading = true;
+    private string? error;
+
+    private bool isAdmin;
+    private string? currentUserId; // ✅ GUID string
+
+    private string search = "";
+    private string typeFilter = "";
+
+    private List<FoodItems> AllAllowed = new();
+    private List<FoodItems> FilteredList = new();
+
+    private int gridKey = 0;
+
+    private string RowClass(FoodItems f) => "ex-row";
+
+    private bool IsOwner(FoodItems f)
+        => !string.IsNullOrWhiteSpace(currentUserId)
+           && !string.IsNullOrWhiteSpace(f.CreatedByUserId)
+           && f.CreatedByUserId == currentUserId;
+
+    // Admin OR owner of custom food
+    private bool CanEdit(FoodItems f)
+        => isAdmin || (f.IsCustom == 1 && IsOwner(f));
+
+    protected override async Task OnInitializedAsync()
     {
-        context = DbFactory.CreateDbContext();
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Identity/Account/Login", true);
+                return;
+            }
+
+            isAdmin = user.IsInRole("Administrator");
+
+            // ✅ GUID from Identity
+            currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            db = await DbFactory.CreateDbContextAsync();
+
+            var all = await db.FoodItems
+                .AsNoTracking()
+                .ToListAsync();
+
+            // Visibility rules
+            if (isAdmin)
+            {
+                AllAllowed = all;
+            }
+            else
+            {
+                AllAllowed = all
+                    .Where(f =>
+                        f.IsCustom == 0 ||
+                        (f.IsCustom == 1
+                         && !string.IsNullOrWhiteSpace(currentUserId)
+                         && f.CreatedByUserId == currentUserId))
+                    .ToList();
+            }
+
+            ApplyFilters();
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            isLoading = false;
+        }
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    private void ApplyFilters()
+    {
+        IEnumerable<FoodItems> q = AllAllowed;
+
+        if (typeFilter == "custom")
+            q = q.Where(f => f.IsCustom == 1);
+        else if (typeFilter == "standard")
+            q = q.Where(f => f.IsCustom == 0);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim().ToLowerInvariant();
+            q = q.Where(f =>
+                (f.Name ?? "").ToLowerInvariant().Contains(s) ||
+                (f.ServingSizeDescription ?? "").ToLowerInvariant().Contains(s));
+        }
+
+        FilteredList = q
+            .OrderBy(f => f.Name)
+            .ToList();
+
+        gridKey++;
+        StateHasChanged();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        search = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        typeFilter = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void ClearFilters()
+    {
+        search = "";
+        typeFilter = "";
+        ApplyFilters();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (db is not null)
+            await db.DisposeAsync();
+    }
 }

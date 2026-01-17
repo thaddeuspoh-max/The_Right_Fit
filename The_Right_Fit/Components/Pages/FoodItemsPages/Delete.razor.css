@@ -1,0 +1,90 @@
+/* =========================================
+   Delete.razor.css (PAGE-ONLY)
+   Base wp styles live in app.css
+   ========================================= */
+
+/* Card spacing */
+.wp-card {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Title inside card */
+.wp-name {
+    font-size: 20px;
+    font-weight: 950;
+    color: #0f172a;
+    margin-bottom: 10px;
+}
+
+/* Plan details */
+.wp-desc {
+    color: rgba(15, 23, 42, 0.75);
+    font-weight: 650;
+    display: grid;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+/* Warning box */
+.wp-dangerbox {
+    margin-top: 14px;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.06);
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.wp-danger-title {
+    font-weight: 950;
+    color: #991b1b;
+}
+
+.wp-danger-sub {
+    margin-top: 4px;
+    font-weight: 650;
+    color: rgba(127, 29, 29, 0.85);
+}
+
+/* Action buttons row */
+.wp-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+/* Danger button override (page-specific) */
+.wp-btn-danger {
+    background: #ef4444;
+    border-color: #ef4444;
+    box-shadow: 0 14px 30px rgba(239, 68, 68, 0.18);
+}
+
+    .wp-btn-danger:hover {
+        filter: brightness(0.96);
+    }
+
+/* Secondary button override */
+.wp-btn-secondary {
+    background: rgba(15, 23, 42, 0.06);
+    border-color: rgba(15, 23, 42, 0.10);
+    color: #0f172a;
+}
+
+    .wp-btn-secondary:hover {
+        background: rgba(15, 23, 42, 0.08);
+    }
+
+/* Scoped fix for NavLink buttons */
+::deep a.wp-newbtn {
+    color: #fff !important;
+    text-decoration: none !important;
+}
+
+/* Mobile */
+@media (max-width: 980px) {
+    .wp-actions .wp-newbtn {
+        flex: 1;
+    }
+}

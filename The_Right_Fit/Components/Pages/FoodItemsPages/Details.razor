@@ -1,62 +1,170 @@
-﻿@page "/fooditems/details"
+﻿@page "/fooditems/details/{Id:int}"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@using The_Right_Fit.Data
 
-<PageTitle>Details</PageTitle>
+@inject IDbContextFactory<The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<h1>Details</h1>
+<PageTitle>Food Item Details</PageTitle>
 
-<div>
-    <h2>FoodItems</h2>
-    <hr />
-    @if (fooditems is null)
-    {
-        <p><em>Loading...</em></p>
-    }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">Name</dt>
-            <dd class="col-sm-10">@fooditems.Name</dd>
-            <dt class="col-sm-2">ServingSizeDescription</dt>
-            <dd class="col-sm-10">@fooditems.ServingSizeDescription</dd>
-            <dt class="col-sm-2">Calories</dt>
-            <dd class="col-sm-10">@fooditems.Calories</dd>
-            <dt class="col-sm-2">IsCustom</dt>
-            <dd class="col-sm-10">@fooditems.IsCustom</dd>
-            <dt class="col-sm-2">CreatedByUserId</dt>
-            <dd class="col-sm-10">@fooditems.CreatedByUserId</dd>
-            <dt class="col-sm-2">DateCreated</dt>
-            <dd class="col-sm-10">@fooditems.DateCreated</dd>
-            <dt class="col-sm-2">DateUpdated</dt>
-            <dd class="col-sm-10">@fooditems.DateUpdated</dd>
-            <dt class="col-sm-2">CreatedBy</dt>
-            <dd class="col-sm-10">@fooditems.CreatedBy</dd>
-            <dt class="col-sm-2">UpdatedBy</dt>
-            <dd class="col-sm-10">@fooditems.UpdatedBy</dd>
-        </dl>
+<div class="wp">
+
+    <div class="wp-head">
         <div>
-            <a href="@($"/fooditems/edit?id={fooditems.Id}")">Edit</a> |
-            <a href="@($"/fooditems")">Back to List</a>
+            <h1 class="wp-title">Food Item Details</h1>
+            <div class="wp-sub">Full information about the selected food item.</div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a class="wp-newbtn" href="/fooditems">Back</a>
+
+            @if (food is not null && CanEdit(food))
+            {
+                <a class="wp-linkbtn" href="@($"/fooditems/edit/{food.Id}")">Edit</a>
+            }
+        </div>
+    </div>
+
+    @if (food is null && isLoading)
+    {
+        <div class="wp-loading">Loading…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot load food item</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else if (food is null)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">This food item does not exist.</div>
+        </div>
+    }
+    else
+    {
+        <div class="wp-card" style="padding:18px;">
+
+            <!-- Top row: name + tags -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:22px; font-weight:950; letter-spacing:-.02em;">
+                        @food.Name
+                    </div>
+
+                    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+                        <span class="wp-pill">@($"{food.Calories:0}") kcal</span>
+                        <span class="wp-pill">@(food.IsCustom == 1 ? "Custom" : "Standard")</span>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(food.ServingSizeDescription))
+                    {
+                        <div class="wp-cell-muted" style="margin-top:10px;">
+                            Serving: @food.ServingSizeDescription
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="wp-divider" style="margin:16px 0;"></div>
+
+            <!-- Details grid -->
+            <div style="display:grid; grid-template-columns: 240px 1fr; gap:14px; align-items:start;">
+                <div class="wp-label">Calories</div>
+                <div style="font-weight:750;">@($"{food.Calories:0}") kcal</div>
+
+                <div class="wp-label">Serving Size</div>
+                <div style="font-weight:750;">
+                    @(string.IsNullOrWhiteSpace(food.ServingSizeDescription) ? "—" : food.ServingSizeDescription)
+                </div>
+
+                <div class="wp-label">Owner (User Id)</div>
+                <div style="font-weight:750;">
+                    @(string.IsNullOrWhiteSpace(food.CreatedByUserId) ? "—" : food.CreatedByUserId)
+                </div>
+            </div>
+
+            <div class="wp-divider" style="margin:16px 0;"></div>
+
+            <!-- Audit -->
+            <div style="display:grid; grid-template-columns: 240px 1fr; gap:14px;">
+                <div class="wp-label">Created</div>
+                <div style="font-weight:750;">
+                    @food.DateCreated
+                    @if (!string.IsNullOrWhiteSpace(food.CreatedBy))
+                    {
+                        <span style="color:rgba(15,23,42,.65); font-weight:700;"> · @food.CreatedBy</span>
+                    }
+                </div>
+
+                <div class="wp-label">Last Updated</div>
+                <div style="font-weight:750;">
+                    @food.DateUpdated
+                    @if (!string.IsNullOrWhiteSpace(food.UpdatedBy))
+                    {
+                        <span style="color:rgba(15,23,42,.65); font-weight:700;"> · @food.UpdatedBy</span>
+                    }
+                </div>
+            </div>
+
         </div>
     }
 </div>
 
 @code {
-    private FoodItems? fooditems;
+    [Parameter] public int Id { get; set; }
 
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    private FoodItems? food;
+    private bool isLoading = true;
+    private string? error;
+
+    private bool isAdmin;
+    private string? currentUserId; // ✅ GUID string
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        fooditems = await context.FoodItems.FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (fooditems is null)
+        try
         {
-            NavigationManager.NavigateTo("notfound");
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Identity/Account/Login", true);
+                return;
+            }
+
+            isAdmin = user.IsInRole("Administrator");
+            currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            await using var context = await DbFactory.CreateDbContextAsync();
+            food = await context.FoodItems.AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == Id);
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
+
+    private bool IsOwner(FoodItems f)
+        => !string.IsNullOrWhiteSpace(currentUserId)
+           && !string.IsNullOrWhiteSpace(f.CreatedByUserId)
+           && f.CreatedByUserId == currentUserId;
+
+    // Admin OR owner of custom item
+    private bool CanEdit(FoodItems f)
+        => isAdmin || (f.IsCustom == 1 && IsOwner(f));
 }

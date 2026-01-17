@@ -8,7 +8,7 @@
         public int Calories { get; set; }
 
         public int IsCustom { get; set; }
-        public int? CreatedByUserId { get; set; }
+        public string? CreatedByUserId { get; set; }
 
 
     }

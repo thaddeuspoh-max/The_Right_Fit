@@ -1,0 +1,213 @@
+﻿/* =========================================
+   Exercises Index (SCOPED CSS)
+   EXTRA BIG QuickGrid fonts + spacing
+   NOTE: QuickGrid needs ::deep selectors
+   ========================================= */
+
+/* ---------- VERY IMPORTANT ----------
+   QuickGrid root font (this affects EVERYTHING inside)
+   ----------------------------------- */
+::deep .quickgrid {
+    font-size: 18.5px; /* 🔥 BIG base font */
+    line-height: 1.65;
+}
+
+/* If your table has wp-table class */
+::deep .wp-table {
+    font-size: 18.5px;
+}
+
+/* ---------- Actions column ---------- */
+::deep .ex-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+}
+
+    ::deep .ex-actions .wp-linkbtn {
+        width: 100%;
+        justify-content: center;
+    }
+
+/* ---------- Search ---------- */
+.wp-searchwide {
+    min-width: 380px;
+    flex: 1;
+}
+
+/* ---------- Card ---------- */
+.wp-tablecard {
+    padding: 0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+/* ---------- TABLE BASE ---------- */
+::deep .wp-table {
+    width: 100%;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 14px;
+}
+
+    /* ---------- HEADER ---------- */
+    ::deep .wp-table thead th {
+        padding: 20px 18px !important;
+        font-size: 17.5px !important; /* 🔥 BIG headers */
+        font-weight: 900;
+        letter-spacing: 0.03em;
+        background: rgba(248,250,252,.97);
+        border-bottom: 2px solid rgba(15,23,42,.18) !important;
+        white-space: nowrap;
+    }
+
+        /* Header icons */
+        ::deep .wp-table thead th:nth-child(1)::before {
+            content: "🏋️ ";
+        }
+
+        ::deep .wp-table thead th:nth-child(2)::before {
+            content: "💪 ";
+        }
+
+        ::deep .wp-table thead th:nth-child(3)::before {
+            content: "🧰 ";
+        }
+
+        ::deep .wp-table thead th:nth-child(4)::before {
+            content: "📝 ";
+        }
+
+        ::deep .wp-table thead th:nth-child(5)::before {
+            content: "▶ ";
+        }
+
+        ::deep .wp-table thead th:nth-child(6)::before {
+            content: "⚙️ ";
+        }
+
+        ::deep .wp-table thead th::before {
+            font-size: 18px; /* 🔥 bigger icons */
+            opacity: 0.95;
+        }
+
+    /* ---------- BODY CELLS ---------- */
+    ::deep .wp-table tbody td {
+        padding: 26px 18px !important; /* 🔥 more vertical air */
+        font-size: 19.2px !important; /* 🔥 BIG readable text */
+        font-weight: 700;
+        line-height: 1.7 !important;
+        vertical-align: top;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.12) !important;
+    }
+
+    /* Row height */
+    ::deep .wp-table tbody tr {
+        min-height: 76px;
+    }
+
+    /* Column separators */
+    ::deep .wp-table thead th,
+    ::deep .wp-table tbody td {
+        border-right: 1px solid rgba(15, 23, 42, 0.10) !important;
+    }
+
+        ::deep .wp-table thead th:last-child,
+        ::deep .wp-table tbody td:last-child {
+            border-right: none !important;
+        }
+
+    /* Hover */
+    ::deep .wp-table tbody tr:hover td {
+        background: rgba(15, 23, 42, 0.04);
+    }
+
+    /* Zebra */
+    ::deep .wp-table tbody tr:nth-child(even) td {
+        background: rgba(248,250,252,.7);
+    }
+
+/* ---------- Instructions text ---------- */
+.wp-wraptext {
+    max-width: 560px;
+    line-height: 1.7;
+    font-size: 18px;
+    white-space: normal;
+    word-break: break-word;
+    color: rgba(15, 23, 42, 0.88);
+}
+
+/* ---------- Pills ---------- */
+.wp-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(59,130,246,.14);
+    border: 1px solid rgba(59,130,246,.25);
+    color: #1d4ed8;
+    font-weight: 900;
+    font-size: 15.8px; /* 🔥 bigger pill */
+}
+
+/* ---------- Muted ---------- */
+.wp-cell-muted {
+    font-size: 17px;
+    color: rgba(15, 23, 42, 0.65);
+}
+
+/* ---------- YouTube button ---------- */
+.wp-yt {
+    display: inline-flex;
+    align-items: center;
+    padding: 11px 16px;
+    border-radius: 12px;
+    background: rgba(239,68,68,.14);
+    border: 1px solid rgba(239,68,68,.28);
+    color: #b91c1c;
+    font-weight: 900;
+    font-size: 16.5px; /* 🔥 bigger button */
+    text-decoration: none;
+}
+
+    .wp-yt:hover {
+        filter: brightness(.95);
+    }
+
+/* ---------- Action buttons ---------- */
+::deep .wp-linkbtn {
+    padding: 11px 14px;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 16.5px; /* 🔥 big actions */
+    display: inline-flex;
+    align-items: center;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 980px) {
+    .wp-tablecard {
+        overflow-x: auto;
+    }
+
+    .wp-wraptext {
+        max-width: 380px;
+    }
+
+    /* Still big, but controlled on mobile */
+    ::deep .quickgrid {
+        font-size: 16.8px;
+    }
+
+    ::deep .wp-table tbody td {
+        font-size: 17.2px !important;
+        padding: 22px 16px !important;
+    }
+
+    ::deep .wp-table thead th {
+        font-size: 16px !important;
+        padding: 18px 16px !important;
+    }
+}

@@ -1,129 +1,222 @@
-﻿@page "/fooditems/edit"
+﻿@page "/fooditems/edit/{Id:int}"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@using The_Right_Fit.Data
 
-<PageTitle>Edit</PageTitle>
+@inject IDbContextFactory<The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<h1>Edit</h1>
+<PageTitle>Edit Food Item</PageTitle>
 
-<h2>FoodItems</h2>
-<hr />
-@if (FoodItems is null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <div class="row">
-        <div class="col-md-4">
-            <EditForm method="post" Model="FoodItems" OnValidSubmit="UpdateFoodItems" FormName="edit" Enhance>
-                <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
-                <input type="hidden" name="FoodItems.Id" value="@FoodItems.Id" />
-                <div class="mb-3">
-                    <label for="name" class="form-label">Name:</label>
-                    <InputText id="name" @bind-Value="FoodItems.Name" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.Name" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="servingsizedescription" class="form-label">ServingSizeDescription:</label>
-                    <InputText id="servingsizedescription" @bind-Value="FoodItems.ServingSizeDescription" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.ServingSizeDescription" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="calories" class="form-label">Calories:</label>
-                    <InputNumber id="calories" @bind-Value="FoodItems.Calories" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.Calories" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="iscustom" class="form-label">IsCustom:</label>
-                    <InputNumber id="iscustom" @bind-Value="FoodItems.IsCustom" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.IsCustom" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="createdbyuserid" class="form-label">CreatedByUserId:</label>
-                    <InputNumber id="createdbyuserid" @bind-Value="FoodItems.CreatedByUserId" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.CreatedByUserId" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="datecreated" class="form-label">DateCreated:</label>
-                    <InputDate id="datecreated" @bind-Value="FoodItems.DateCreated" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.DateCreated" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="dateupdated" class="form-label">DateUpdated:</label>
-                    <InputDate id="dateupdated" @bind-Value="FoodItems.DateUpdated" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.DateUpdated" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="createdby" class="form-label">CreatedBy:</label>
-                    <InputText id="createdby" @bind-Value="FoodItems.CreatedBy" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.CreatedBy" class="text-danger" />
-                </div>
-                <div class="mb-3">
-                    <label for="updatedby" class="form-label">UpdatedBy:</label>
-                    <InputText id="updatedby" @bind-Value="FoodItems.UpdatedBy" class="form-control" />
-                    <ValidationMessage For="() => FoodItems.UpdatedBy" class="text-danger" />
-                </div>
-                <button type="submit" class="btn btn-primary">Save</button>
-            </EditForm>
+<div class="wp">
+
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Edit Food Item</h1>
+            <div class="wp-sub">Update food details. Ownership and audit fields are locked.</div>
         </div>
-    </div>
-}
 
-<div>
-    <a href="/fooditems">Back to List</a>
+        <a class="wp-linkbtn" href="/fooditems">Back</a>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="wp-loading">Loading…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot edit</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else if (food is null)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">This food item does not exist.</div>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="food" OnValidSubmit="Save">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="wp-card" style="padding:18px;">
+                <div style="display:grid; gap:14px;">
+
+                    <div>
+                        <div class="wp-label">Name</div>
+                        <InputText class="wp-input" @bind-Value="food.Name" />
+                        <ValidationMessage For="() => food.Name" class="validation-message" />
+                    </div>
+
+                    <div>
+                        <div class="wp-label">Serving Size Description</div>
+                        <InputText class="wp-input" @bind-Value="food.ServingSizeDescription" />
+                        <ValidationMessage For="() => food.ServingSizeDescription" class="validation-message" />
+                    </div>
+
+                    <div style="max-width:240px;">
+                        <div class="wp-label">Calories</div>
+                        <InputNumber class="wp-input" @bind-Value="food.Calories" />
+                        <ValidationMessage For="() => food.Calories" class="validation-message" />
+                    </div>
+
+                    <div class="wp-divider"></div>
+
+                    <!-- ✅ Ownership/Audit fields DISPLAY ONLY -->
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px;">
+
+                        <div>
+                            <div class="wp-label">Type</div>
+                            <input class="wp-input" value="@(food.IsCustom == 1 ? "Custom" : "Standard")" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Created By User Id</div>
+                            <input class="wp-input" value="@(food.CreatedByUserId ?? "—")" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Created By</div>
+                            <input class="wp-input" value="@(food.CreatedBy ?? "—")" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Date Created</div>
+                            <input class="wp-input" value="@food.DateCreated.ToString("yyyy-MM-dd HH:mm")" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Updated By</div>
+                            <input class="wp-input" value="@(food.UpdatedBy ?? "—")" disabled />
+                        </div>
+
+                        <div>
+                            <div class="wp-label">Date Updated</div>
+                            <input class="wp-input" value="@food.DateUpdated.ToString("yyyy-MM-dd HH:mm")" disabled />
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap; margin-top:6px;">
+                        <button type="submit" class="wp-newbtn">Save Changes</button>
+                        <a class="wp-linkbtn" href="/fooditems">Cancel</a>
+                    </div>
+
+                </div>
+            </div>
+        </EditForm>
+    }
 </div>
 
 @code {
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    [Parameter] public int Id { get; set; }
 
-    [SupplyParameterFromForm]
-    private FoodItems? FoodItems { get; set; }
+    private bool isLoading = true;
+    private string? error;
+
+    private FoodItems? food;
+
+    private bool isAdmin;
+    private string? currentUserId;     // ✅ GUID string
+    private string displayName = "User";
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        FoodItems ??= await context.FoodItems.FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (FoodItems is null)
+        try
         {
-            NavigationManager.NavigateTo("notfound");
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Identity/Account/Login", true);
+                return;
+            }
+
+            isAdmin = user.IsInRole("Administrator");
+
+            displayName =
+                user.FindFirstValue(ClaimTypes.Name)
+                ?? user.FindFirstValue(ClaimTypes.Email)
+                ?? user.Identity?.Name
+                ?? "User";
+
+            currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+            food = await db.FoodItems.FirstOrDefaultAsync(f => f.Id == Id);
+
+            if (food is null)
+            {
+                error = "Food item not found.";
+                return;
+            }
+
+            // ✅ Security: only Admin OR Owner can edit (owner only for custom)
+            var isOwner =
+                !string.IsNullOrWhiteSpace(currentUserId)
+                && !string.IsNullOrWhiteSpace(food.CreatedByUserId)
+                && food.CreatedByUserId == currentUserId;
+
+            if (!isAdmin && !(food.IsCustom == 1 && isOwner))
+            {
+                Nav.NavigateTo("/fooditems", true);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
-    // To protect from overposting attacks, enable the specific properties you want to bind to.
-    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task UpdateFoodItems()
+    private async Task Save()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.Attach(FoodItems!).State = EntityState.Modified;
+        if (food is null) return;
 
         try
         {
-            await context.SaveChangesAsync();
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            // ✅ Force audit updates
+            food.UpdatedBy = displayName;
+            food.DateUpdated = DateTime.Now;
+
+            db.Attach(food);
+            db.Entry(food).State = EntityState.Modified;
+
+            // ✅ Never allow these to be changed from UI
+            db.Entry(food).Property(x => x.IsCustom).IsModified = false;
+            db.Entry(food).Property(x => x.CreatedByUserId).IsModified = false;
+            db.Entry(food).Property(x => x.CreatedBy).IsModified = false;
+            db.Entry(food).Property(x => x.DateCreated).IsModified = false;
+
+            // ✅ Ensure updated fields are written
+            db.Entry(food).Property(x => x.UpdatedBy).IsModified = true;
+            db.Entry(food).Property(x => x.DateUpdated).IsModified = true;
+
+            await db.SaveChangesAsync();
+            Nav.NavigateTo("/fooditems");
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!FoodItemsExists(FoodItems!.Id))
-            {
-                NavigationManager.NavigateTo("notfound");
-            }
-            else
-            {
-                throw;
-            }
+            error = "This record was updated by someone else. Reload and try again.";
         }
-
-        NavigationManager.NavigateTo("/fooditems");
-    }
-
-    private bool FoodItemsExists(int id)
-    {
-        using var context = DbFactory.CreateDbContext();
-        return context.FoodItems.Any(e => e.Id == id);
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
     }
 }

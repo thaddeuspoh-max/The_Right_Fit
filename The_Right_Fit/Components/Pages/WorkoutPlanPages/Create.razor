@@ -76,8 +76,8 @@
                         <button type="button"
                                 class="wp-newbtn"
                                 style="background:@(day == selectedDay ? "var(--trf-primary)" : "rgba(15,23,42,.06)");
-                                               color:@(day == selectedDay ? "#fff" : "#0f172a");
-                                               box-shadow:none;"
+                                                       color:@(day == selectedDay ? "#fff" : "#0f172a");
+                                                       box-shadow:none;"
                                 @onclick="@(() => selectedDay = day)">
                             @DayName(day)
                         </button>
@@ -92,12 +92,12 @@
                     {
                         <div @key="@($"{selectedDay}-{row.ExerciseId}")"
                              style="display:grid;
-                                            grid-template-columns: 1.5fr .5fr .5fr .6fr;
-                                            gap:10px;
-                                            padding:12px;
-                                            margin-top:10px;
-                                            border:1px solid rgba(15,23,42,.1);
-                                            border-radius:12px;">
+                                                    grid-template-columns: 1.5fr .5fr .5fr .6fr;
+                                                    gap:10px;
+                                                    padding:12px;
+                                                    margin-top:10px;
+                                                    border:1px solid rgba(15,23,42,.1);
+                                                    border-radius:12px;">
 
                             <div>
                                 <div class="wp-label">Exercise</div>
@@ -163,9 +163,9 @@
 
                     <div @key="@($"picker-{selectedDay}-{ex.Id}")"
                          style="display:flex; justify-content:space-between;
-                                        padding:10px; margin-top:8px;
-                                        border:1px solid rgba(15,23,42,.08);
-                                        border-radius:10px;">
+                                                padding:10px; margin-top:8px;
+                                                border:1px solid rgba(15,23,42,.08);
+                                                border-radius:10px;">
 
                         <span>
                             @ex.ExerciseName
@@ -213,7 +213,6 @@
     private List<Exercise> allExercises = new();
     private Dictionary<int, List<DayRow>> dayMap = new();
 
-    // ✅ Search + filter (same style as your earlier file)
     private string exerciseSearch = "";
     private string selectedMuscleGroup = "";
     private List<string> muscleGroups = new();
@@ -238,7 +237,6 @@
 
     private List<DayRow> DayRows(int d)
     {
-        // ✅ block any accidental day 8 from ever being created/used
         if (!IsValidDay(d))
             return new List<DayRow>();
 
@@ -248,7 +246,6 @@
         return dayMap[d];
     }
 
-    // If your Exercise property name isn't MuscleGroup, change this helper.
     private static string? GetMuscleGroup(Exercise ex)
         => ex.GetType().GetProperty("MuscleGroup")?.GetValue(ex) as string;
 
@@ -279,7 +276,6 @@
     private void Add(int d, Exercise ex)
     {
         if (!IsValidDay(d)) return;
-
         if (DayRows(d).Any(x => x.ExerciseId == ex.Id)) return;
 
         DayRows(d).Add(new DayRow
@@ -302,11 +298,19 @@
     {
         isLoading = true;
 
+        // ensure logged in (same pattern as your other pages)
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Identity/Account/Login", true);
+            return;
+        }
+
         allExercises = await Db.Exercise
             .OrderBy(x => x.ExerciseName)
             .ToListAsync();
 
-        // Muscle group dropdown options
         muscleGroups = allExercises
             .Select(e => (GetMuscleGroup(e) ?? "").Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
@@ -325,7 +329,12 @@
     private async Task Save()
     {
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userId = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var user = auth.User;
+
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        // ✅ FIX: if admin creates, make it PUBLIC (shows for everyone)
+        var isAdmin = user.IsInRole("Administrator");
 
         var plan = new WorkoutPlan
         {
@@ -333,7 +342,10 @@
             GoalType = form.GoalType,
             DifficultyLevel = form.DifficultyLevel,
             DurationWeeks = form.DurationWeeks,
-            OwnerIdentityUserId = userId,
+
+            // admin => public, user => owned
+            OwnerIdentityUserId = isAdmin ? null : userId,
+
             DateCreated = DateTime.Now,
             DateUpdated = DateTime.Now
         };
@@ -343,7 +355,6 @@
 
         var rows = new List<WorkoutPlanExercise>();
 
-        // ✅ Save ONLY 1..7 (never dayMap.Keys)
         for (int d = 1; d <= 7; d++)
         {
             foreach (var r in dayMap[d])
@@ -352,7 +363,7 @@
                 {
                     WorkoutPlanId = plan.Id,
                     ExerciseId = r.ExerciseId,
-                    DayOfWeek = d,   // 1..7 only
+                    DayOfWeek = d,
                     Sets = r.Sets,
                     Reps = r.Reps
                 });

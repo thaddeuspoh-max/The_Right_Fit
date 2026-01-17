@@ -1,84 +1,144 @@
 ﻿@page "/fooditems/create"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
+@using The_Right_Fit.Data
 
-<PageTitle>Create</PageTitle>
+@inject IDbContextFactory<The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<h1>Create</h1>
+<PageTitle>Create Food Item</PageTitle>
 
-<h2>FoodItems</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm method="post" Model="FoodItems" OnValidSubmit="AddFoodItems" FormName="create" Enhance>
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="name" class="form-label">Name:</label> 
-                <InputText id="name" @bind-Value="FoodItems.Name" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.Name" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="servingsizedescription" class="form-label">ServingSizeDescription:</label> 
-                <InputText id="servingsizedescription" @bind-Value="FoodItems.ServingSizeDescription" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.ServingSizeDescription" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="calories" class="form-label">Calories:</label> 
-                <InputNumber id="calories" @bind-Value="FoodItems.Calories" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.Calories" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="iscustom" class="form-label">IsCustom:</label> 
-                <InputNumber id="iscustom" @bind-Value="FoodItems.IsCustom" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.IsCustom" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="createdbyuserid" class="form-label">CreatedByUserId:</label> 
-                <InputNumber id="createdbyuserid" @bind-Value="FoodItems.CreatedByUserId" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.CreatedByUserId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datecreated" class="form-label">DateCreated:</label> 
-                <InputDate id="datecreated" @bind-Value="FoodItems.DateCreated" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.DateCreated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="dateupdated" class="form-label">DateUpdated:</label> 
-                <InputDate id="dateupdated" @bind-Value="FoodItems.DateUpdated" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.DateUpdated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="createdby" class="form-label">CreatedBy:</label> 
-                <InputText id="createdby" @bind-Value="FoodItems.CreatedBy" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.CreatedBy" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="updatedby" class="form-label">UpdatedBy:</label> 
-                <InputText id="updatedby" @bind-Value="FoodItems.UpdatedBy" class="form-control" /> 
-                <ValidationMessage For="() => FoodItems.UpdatedBy" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
+<div class="wp">
+
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Create Food Item</h1>
+            <div class="wp-sub">Add a custom food item. Audit fields are set automatically.</div>
+        </div>
+
+        <a class="wp-linkbtn" href="/fooditems">Back</a>
     </div>
-</div>
 
-<div>
-    <a href="/fooditems">Back to List</a>
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot create</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+
+    <EditForm Model="food" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="wp-card" style="padding:18px;">
+            <div style="display:grid; gap:14px;">
+
+                <div>
+                    <div class="wp-label">Name</div>
+                    <InputText class="wp-input" @bind-Value="food.Name" />
+                    <ValidationMessage For="() => food.Name" class="validation-message" />
+                </div>
+
+                <div>
+                    <div class="wp-label">Serving Size Description</div>
+                    <InputText class="wp-input" @bind-Value="food.ServingSizeDescription" />
+                    <ValidationMessage For="() => food.ServingSizeDescription" class="validation-message" />
+                </div>
+
+                <div style="max-width:240px;">
+                    <div class="wp-label">Calories</div>
+                    <InputNumber class="wp-input" @bind-Value="food.Calories" />
+                    <ValidationMessage For="() => food.Calories" class="validation-message" />
+                </div>
+
+                <div style="display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap; margin-top:6px;">
+                    <button type="submit" class="wp-newbtn">Create</button>
+                    <a class="wp-linkbtn" href="/fooditems">Cancel</a>
+                </div>
+
+            </div>
+        </div>
+    </EditForm>
+
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private FoodItems FoodItems { get; set; } = new();
+    private FoodItems food = new();
+    private string? error;
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task AddFoodItems()
+    private string? currentUserId;   // ✅ GUID string
+    private string displayName = "User";
+    private bool ready = false;
+
+    protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.FoodItems.Add(FoodItems);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/fooditems");
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Identity/Account/Login", true);
+            return;
+        }
+
+        displayName =
+            user.FindFirstValue(ClaimTypes.Name)
+            ?? user.FindFirstValue(ClaimTypes.Email)
+            ?? user.Identity?.Name
+            ?? "User";
+
+        currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(currentUserId))
+        {
+            error = "Cannot determine your user id. Please log out and log in again.";
+            ready = false;
+            return;
+        }
+
+        ready = true;
+    }
+
+    private async Task Save()
+    {
+        if (!ready)
+        {
+            error ??= "You are not allowed to create food items right now.";
+            return;
+        }
+
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+
+            // ✅ Set ownership + audit automatically
+            food.IsCustom = 1; // always custom for user-created
+            food.CreatedByUserId = currentUserId; // ✅ GUID stored
+
+            food.CreatedBy = displayName;
+            food.DateCreated = DateTime.Now;
+
+            food.UpdatedBy = displayName;
+            food.DateUpdated = DateTime.Now;
+
+            db.FoodItems.Add(food);
+            await db.SaveChangesAsync();
+
+            Nav.NavigateTo("/fooditems");
+        }
+        catch (DbUpdateException ex)
+        {
+            error = ex.InnerException?.Message ?? ex.Message;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
     }
 }
