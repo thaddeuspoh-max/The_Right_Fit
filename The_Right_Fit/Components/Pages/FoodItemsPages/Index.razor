@@ -188,13 +188,21 @@
                 .AsNoTracking()
                 .ToListAsync();
 
-            // Visibility rules
             if (isAdmin)
             {
-                AllAllowed = all;
+                // ✅ Admin sees:
+                // 1) Standard foods (IsCustom == 0)
+                // 2) Foods NOT created by a user (CreatedByUserId is null/empty)
+                // This hides user-created custom foods.
+                AllAllowed = all
+                    .Where(f =>
+                        f.IsCustom == 0 ||
+                        (f.IsCustom == 1 && string.IsNullOrWhiteSpace(f.CreatedByUserId)))
+                    .ToList();
             }
             else
             {
+                // Normal user sees standard + their own custom
                 AllAllowed = all
                     .Where(f =>
                         f.IsCustom == 0 ||
@@ -203,6 +211,7 @@
                          && f.CreatedByUserId == currentUserId))
                     .ToList();
             }
+
 
             ApplyFilters();
             isLoading = false;
