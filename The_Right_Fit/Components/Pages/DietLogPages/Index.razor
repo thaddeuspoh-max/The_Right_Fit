@@ -1,46 +1,240 @@
 ﻿@page "/dietlogs"
+@rendermode InteractiveServer
+
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.QuickGrid
-@using The_Right_Fit.Domain
 @using The_Right_Fit.Data
-@implements IAsyncDisposable
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@using The_Right_Fit.Domain
+@inject The_Right_FitContext Db
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Diet Logs</PageTitle>
 
-<h1>Index</h1>
+<div class="wp">
 
-<p>
-    <a href="dietlogs/create">Create New</a>
-</p>
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Diet Logs</h1>
+            <div class="wp-sub">Track what you eat, meal type, and calories.</div>
+        </div>
 
-<QuickGrid Class="table" Items="context.DietLog">
-    <PropertyColumn Property="dietlog => dietlog.UserId" />
-    <PropertyColumn Property="dietlog => dietlog.FoodItemId" />
-    <PropertyColumn Property="dietlog => dietlog.LogDate" />
-    <PropertyColumn Property="dietlog => dietlog.MealType" />
-    <PropertyColumn Property="dietlog => dietlog.QuantityServings" />
-    <PropertyColumn Property="dietlog => dietlog.TotalCalories" />
-    <PropertyColumn Property="dietlog => dietlog.CustomFoodName" />
-    <PropertyColumn Property="dietlog => dietlog.DateCreated" />
-    <PropertyColumn Property="dietlog => dietlog.DateUpdated" />
-    <PropertyColumn Property="dietlog => dietlog.CreatedBy" />
-    <PropertyColumn Property="dietlog => dietlog.UpdatedBy" />
+        <NavLink class="wp-newbtn" href="/dietlogs/create">
+            <span class="wp-plus">+</span>
+            New Log
+        </NavLink>
+    </div>
 
-    <TemplateColumn Context="dietlog">
-        <a href="@($"dietlogs/edit?id={dietlog.Id}")">Edit</a> |
-        <a href="@($"dietlogs/details?id={dietlog.Id}")">Details</a> |
-        <a href="@($"dietlogs/delete?id={dietlog.Id}")">Delete</a>
-    </TemplateColumn>
-</QuickGrid>
+    <!-- FILTERS -->
+    <div class="wl-filters">
 
-@code {
-    private The_Right_Fit.Data.The_Right_FitContext context = default!;
+        <div class="wl-filter">
+            <div class="wp-label">From</div>
+            <InputDate class="wl-input" @bind-Value="fromDate" />
+        </div>
 
-    protected override void OnInitialized()
+        <div class="wl-filter">
+            <div class="wp-label">To</div>
+            <InputDate class="wl-input" @bind-Value="toDate" />
+        </div>
+
+        <div class="wl-filter">
+            <div class="wp-label">Meal Type</div>
+            <select class="wl-select" @bind="mealType">
+                <option value="">Any</option>
+                <option value="Breakfast">Breakfast</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Dinner">Dinner</option>
+                <option value="Snack">Snack</option>
+            </select>
+        </div>
+
+        <div class="wl-filter">
+            <div class="wp-label">Min Calories</div>
+            <select class="wl-select" @bind="minCaloriesText">
+                <option value="">Any</option>
+                <option value="200">200+</option>
+                <option value="400">400+</option>
+                <option value="600">600+</option>
+                <option value="800">800+</option>
+                <option value="1000">1000+</option>
+            </select>
+        </div>
+
+        <div class="wl-filter">
+            <div class="wp-label">Search Food</div>
+            <div class="wl-searchbox">
+                <span class="wl-searchicon">🔍</span>
+                <input class="wl-input"
+                       placeholder="Chicken rice, oats..."
+                       @bind="search"
+                       @bind:event="oninput" />
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONTENT -->
+    @if (loading)
     {
-        context = DbFactory.CreateDbContext();
+        <div class="wp-loading">Loading diet logs…</div>
+    }
+    else if (FilteredLogs.Count == 0)
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">No diet logs found</div>
+            <div class="wp-empty-sub">Try adjusting filters or create a new log.</div>
+        </div>
+    }
+    else
+    {
+        <div class="wl-grid">
+            @foreach (var x in FilteredLogs)
+            {
+                <div class="wl-card">
+
+                    <div class="wl-cardtop">
+                        <span class="wl-tag">
+                            @(!string.IsNullOrWhiteSpace(x.MealType) ? x.MealType : "Meal")
+                        </span>
+
+                        <span class="wl-date">@x.LogDate.ToString("dd MMM yyyy")</span>
+                    </div>
+
+                    <div class="wl-main">
+                        <div class="wl-duration">
+                            <span class="wl-clock">🍽</span>
+                            <span class="wl-duration-text">@FoodLabel(x)</span>
+                        </div>
+
+                        <div class="dl-chips">
+                            <span class="dl-chip"><b>Servings</b> @x.QuantityServings</span>
+                            <span class="dl-chip"><b>Calories</b> @x.TotalCalories kcal</span>
+                        </div>
+
+                    </div>
+
+                    <div class="wl-cardbottom">
+
+                        <NavLink class="wp-newbtn wl-viewbtn" href="@($"/dietlogs/details/{x.Id}")">
+                            View Details
+                        </NavLink>
+
+                        <div class="wl-actions">
+                            <NavLink class="wp-linkbtn" href="@($"/dietlogs/edit/{x.Id}")">
+                                Edit
+                            </NavLink>
+
+                            <NavLink class="wp-linkbtn wp-linkbtn-danger" href="@($"/dietlogs/delete/{x.Id}")">
+                                Delete
+                            </NavLink>
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+        </div>
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+</div>
+
+@code {
+    private bool loading = true;
+    private List<DietLog> allLogs = new();
+
+    // If you have FoodItem entity and want to show names:
+    private Dictionary<int, string> foodNameById = new();
+
+    // filters
+    private DateTime? fromDate;
+    private DateTime? toDate;
+    private string? mealType = "";
+    private string? minCaloriesText = "";
+    private string search = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+
+        allLogs = await Db.DietLog
+            .AsNoTracking()
+            .OrderByDescending(x => x.LogDate)
+            .ThenByDescending(x => x.Id)
+            .ToListAsync();
+
+        // OPTIONAL: if you have Db.FoodItems (or Db.FoodItem) table, load names so we can display them.
+        // Adjust table name to your actual DbSet.
+        try
+        {
+            var ids = allLogs.Where(x => x.FoodItemId.HasValue).Select(x => x.FoodItemId!.Value).Distinct().ToList();
+            if (ids.Count > 0)
+            {
+                // Change Db.FoodItems to your real DbSet name
+                var foods = await Db.FoodItems
+                    .AsNoTracking()
+                    .Where(f => ids.Contains(f.Id))
+                    .Select(f => new { f.Id, f.Name })
+                    .ToListAsync();
+
+                foodNameById = foods.ToDictionary(x => x.Id, x => x.Name);
+            }
+        }
+        catch
+        {
+            // If you don't have FoodItems table yet, ignore.
+        }
+
+        loading = false;
+    }
+
+    private List<DietLog> FilteredLogs
+    {
+        get
+        {
+            IEnumerable<DietLog> q = allLogs;
+
+            if (fromDate.HasValue)
+            {
+                var fd = fromDate.Value.Date;
+                q = q.Where(x => x.LogDate >= fd);
+            }
+
+            if (toDate.HasValue)
+            {
+                var td = toDate.Value.Date.AddDays(1).AddTicks(-1);
+                q = q.Where(x => x.LogDate <= td);
+            }
+
+            if (!string.IsNullOrWhiteSpace(mealType))
+            {
+                q = q.Where(x => (x.MealType ?? "") == mealType);
+            }
+
+            if (!string.IsNullOrWhiteSpace(minCaloriesText) &&
+                int.TryParse(minCaloriesText, out var minC))
+            {
+                q = q.Where(x => x.TotalCalories >= minC);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                q = q.Where(x =>
+                    ((x.CustomFoodName ?? "").Contains(s, StringComparison.OrdinalIgnoreCase))
+                    // also search by FoodItemId name if we have it
+                    || (x.FoodItemId.HasValue && foodNameById.TryGetValue(x.FoodItemId.Value, out var nm)
+                        && nm.Contains(s, StringComparison.OrdinalIgnoreCase))
+                );
+            }
+
+            return q.ToList();
+        }
+    }
+
+    private string FoodLabel(DietLog x)
+    {
+        if (x.FoodItemId.HasValue && foodNameById.TryGetValue(x.FoodItemId.Value, out var name))
+            return name;
+
+        return !string.IsNullOrWhiteSpace(x.CustomFoodName) ? x.CustomFoodName! : "Custom food";
+    }
 }
