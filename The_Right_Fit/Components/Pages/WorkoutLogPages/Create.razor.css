@@ -1,5 +1,6 @@
 ﻿/* =========================================
    WorkoutLogs/Create.razor.css (PAGE-ONLY)
+   Make Create match Edit look
    Uses global wp-* design system in app.css
    ========================================= */
 
@@ -36,15 +37,16 @@
     min-width: 200px;
 }
 
-/* Selected exercise row card */
+/* ✅ Selected exercise row card (match Edit) */
 .wlog-rowcard {
     display: grid;
-    grid-template-columns: 1.6fr 0.6fr 0.6fr 0.7fr;
+    grid-template-columns: 1.2fr 0.8fr 1.2fr auto; /* match Edit proportions */
     gap: 12px;
     padding: 12px;
     border: 1px solid rgba(15, 23, 42, 0.10);
     border-radius: 12px;
-    background: #fff;
+    background: rgba(15, 23, 42, 0.02); /* key difference */
+    align-items: end;
 }
 
 .wlog-exname {
@@ -54,7 +56,6 @@
 
 .wlog-removewrap {
     display: flex;
-    align-items: flex-end;
     justify-content: flex-end;
 }
 
@@ -68,6 +69,7 @@
     display: flex;
     gap: 10px;
     margin-top: 16px;
+    flex-wrap: wrap; /* match Edit spacing */
 }
 
 /* Picker filters */
@@ -92,7 +94,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 12px;
-    padding: 10px;
+    padding: 10px 12px;
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 12px;
     background: #fff;
@@ -119,7 +121,8 @@
         grid-template-columns: 1fr;
     }
 
-    .wlog-actions .wp-newbtn {
+    .wlog-actions .wp-newbtn,
+    .wlog-actions .wp-linkbtn {
         flex: 1;
     }
 }

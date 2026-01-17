@@ -12,7 +12,7 @@
     <div class="wp-head">
         <div>
             <h1 class="wp-title">Delete Workout Log</h1>
-            <div class="wp-sub">This action cannot be undone.</div>
+            <div class="wp-sub">Confirm deletion of this workout log entry.</div>
         </div>
 
         <NavLink class="wp-linkbtn" href="/workoutlogs">Back</NavLink>
@@ -29,58 +29,56 @@
             <div class="wp-empty-sub">@error</div>
         </div>
     }
-    else if (log == null)
+    else if (log is null)
     {
-        <div class="wp-loading">Workout log not found.</div>
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">Workout log not found.</div>
+        </div>
     }
     else
     {
-        <div class="wp-card del-card">
+        <div class="wp-card" style="padding:18px;">
 
-            <div class="del-top">
-                <div class="del-title">Workout Log</div>
-                <div class="del-meta">
-                    <span class="del-pill">Session</span>
-                    <span class="del-date">@log.WorkoutDateTime.ToString("ddd, dd MMM yyyy • h:mm tt")</span>
+            <div class="wp-name">Workout Log</div>
+
+            <div class="wp-desc">
+                <div><span class="wp-label">Session:</span> @log.WorkoutDateTime.ToString("ddd, dd MMM yyyy • h:mm tt")</div>
+                <div><span class="wp-label">Plan:</span> @(log.WorkoutPlanId is null ? "No plan" : $"Plan #{log.WorkoutPlanId}")</div>
+            </div>
+
+            <div class="wl-del-summary">
+                <div class="wl-del-item">
+                    <div class="wl-del-label">Duration</div>
+                    <div class="wl-del-value">@log.DurationMinutes min</div>
+                </div>
+
+                <div class="wl-del-item">
+                    <div class="wl-del-label">Exercises</div>
+                    <div class="wl-del-value">@exerciseCount</div>
+                </div>
+
+                <div class="wl-del-item">
+                    <div class="wl-del-label">Notes</div>
+                    <div class="wl-del-value">@((string.IsNullOrWhiteSpace(log.Notes)) ? "—" : "Saved")</div>
                 </div>
             </div>
 
-            <div class="del-summary">
-
-                <div class="del-item">
-                    <div class="del-label">Duration</div>
-                    <div class="del-value">@log.DurationMinutes min</div>
-                </div>
-
-                <div class="del-item">
-                    <div class="del-label">Exercises</div>
-                    <div class="del-value">@exerciseCount</div>
-                </div>
-
-                <div class="del-item">
-                    <div class="del-label">Plan</div>
-                    <div class="del-value">
-                        @(log.WorkoutPlanId is null ? "No plan" : $"Plan #{log.WorkoutPlanId}")
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="del-notes">
-                <div class="del-label">Notes</div>
-                <div class="del-notesbox">
+            <div class="wl-del-notes">
+                <div class="wp-label">Notes</div>
+                <div class="wl-del-notesbox">
                     @SafeShort(log.Notes, "—")
                 </div>
             </div>
 
-            <div class="wp-dangerbox del-danger">
+            <div class="wp-dangerbox" style="margin-top:14px;">
                 <div class="wp-danger-title">Warning</div>
                 <div class="wp-danger-sub">
                     Deleting this workout log will permanently remove it and all its logged exercises.
                 </div>
             </div>
 
-            <div class="del-actions">
+            <div class="wp-actions">
                 <button class="wp-newbtn wp-btn-danger"
                         disabled="@isDeleting"
                         @onclick="ConfirmDelete">
@@ -94,6 +92,7 @@
                     Cancel
                 </button>
             </div>
+
         </div>
     }
 </div>
@@ -161,7 +160,6 @@
                 return;
             }
 
-            // delete children first (FK safety)
             var children = await db.WorkoutLogExercise
                 .Where(x => x.WorkoutLogId == Id)
                 .ToListAsync();

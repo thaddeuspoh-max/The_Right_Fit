@@ -1,9 +1,13 @@
 ﻿@page "/workoutlogs/edit/{Id:int}"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
+
 @inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
 <PageTitle>Edit Workout Log</PageTitle>
@@ -203,6 +207,9 @@
     private string? loadError;
     private string? error;
 
+    // Auth (for audit fields)
+    private string? identityUserId;
+
     private WorkoutLog? logEntity;
 
     private List<Exercise> allExercises = new();
@@ -211,15 +218,13 @@
     private string exerciseSearch = "";
     private string selectedMuscleGroup = "";
 
-    // user-editable values
     private LogForm form = new();
 
-    // selected exercises
     private List<LogRow> rows = new();
 
     private class LogForm
     {
-        public int DurationMinutes { get; set; }
+        public int DurationMinutes { get; set; } = 30;
         public string? Notes { get; set; }
     }
 
@@ -238,6 +243,24 @@
         loadError = null;
         error = null;
 
+        // ✅ read logged-in user (same as Create)
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Account/Login", true);
+            return;
+        }
+
+        identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(identityUserId))
+        {
+            loadError = "Cannot read your user id.";
+            loading = false;
+            return;
+        }
+
         try
         {
             using var db = DbFactory.CreateDbContext();
@@ -255,13 +278,22 @@
                 .OrderBy(x => x)
                 .ToList();
 
-            // load workout log
+            // load workout log (track not required for prefill)
             logEntity = await db.WorkoutLog
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == Id);
 
             if (logEntity is null)
             {
                 loadError = "Workout log not found.";
+                return;
+            }
+
+            // OPTIONAL: basic ownership check (recommended)
+            if (!string.IsNullOrWhiteSpace(logEntity.OwnerIdentityUserId) &&
+                !string.Equals(logEntity.OwnerIdentityUserId, identityUserId, StringComparison.Ordinal))
+            {
+                loadError = "You do not have permission to edit this workout log.";
                 return;
             }
 
@@ -272,13 +304,13 @@
                 Notes = logEntity.Notes
             };
 
-            // load rows (WorkoutLogExercise) + exercise name
+            // load existing children
             var existing = await db.WorkoutLogExercise
                 .AsNoTracking()
                 .Where(x => x.WorkoutLogId == Id)
                 .ToListAsync();
 
-            // build rows with exercise names
+            // build rows with exercise names (same as Create UI expects)
             rows = existing
                 .Select(x =>
                 {
@@ -304,7 +336,6 @@
         }
     }
 
-    // If Exercise has MuscleGroup, you can replace with: => ex.MuscleGroup;
     private static string? GetMuscleGroup(Exercise ex)
         => ex.GetType().GetProperty("MuscleGroup")?.GetValue(ex) as string;
 
@@ -355,12 +386,6 @@
     {
         error = null;
 
-        if (logEntity is null)
-        {
-            error = "Workout log not loaded.";
-            return;
-        }
-
         if (rows.Count == 0)
         {
             error = "Please add at least 1 exercise.";
@@ -385,6 +410,12 @@
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(identityUserId))
+        {
+            error = "You are not logged in.";
+            return;
+        }
+
         saving = true;
 
         try
@@ -399,6 +430,14 @@
                 return;
             }
 
+            // OPTIONAL: ownership check again (server-side safety)
+            if (!string.IsNullOrWhiteSpace(log.OwnerIdentityUserId) &&
+                !string.Equals(log.OwnerIdentityUserId, identityUserId, StringComparison.Ordinal))
+            {
+                error = "You do not have permission to edit this workout log.";
+                return;
+            }
+
             var now = DateTime.Now;
 
             // update log fields
@@ -406,20 +445,20 @@
             log.Notes = form.Notes;
 
             log.DateUpdated = now;
-            log.UpdatedBy = "System";
+            log.UpdatedBy = identityUserId;
 
             // load existing children (tracked)
             var existingChildren = await db.WorkoutLogExercise
                 .Where(x => x.WorkoutLogId == Id)
                 .ToListAsync();
 
-            // remove children that are no longer selected
+            // remove children not selected
             var selectedIds = rows.Select(r => r.ExerciseId).ToHashSet();
             var toRemove = existingChildren.Where(c => !selectedIds.Contains(c.ExerciseId)).ToList();
             if (toRemove.Count > 0)
                 db.WorkoutLogExercise.RemoveRange(toRemove);
 
-            // upsert selected children
+            // upsert selected
             foreach (var r in rows)
             {
                 var child = existingChildren.FirstOrDefault(c => c.ExerciseId == r.ExerciseId);
@@ -434,8 +473,8 @@
 
                         DateCreated = now,
                         DateUpdated = now,
-                        CreatedBy = "System",
-                        UpdatedBy = "System"
+                        CreatedBy = identityUserId,
+                        UpdatedBy = identityUserId
                     });
                 }
                 else
@@ -444,7 +483,7 @@
                     child.ActualReps = r.ActualReps;
 
                     child.DateUpdated = now;
-                    child.UpdatedBy = "System";
+                    child.UpdatedBy = identityUserId;
                 }
             }
 

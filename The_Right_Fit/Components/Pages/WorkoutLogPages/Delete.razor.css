@@ -1,102 +1,112 @@
-/* WorkoutLogs/Delete.razor.css */
+/* WorkoutLogs/Delete.razor.css (PAGE-ONLY)
+   Uses global wp-* system from app.css
+*/
 
-.del-card {
-    padding: 18px;
+/* Keep the delete card aligned like WorkoutPlans */
+.wp-card {
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-/* Top header inside the card */
-.del-top {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 14px;
-}
-
-.del-title {
+/* Title inside card */
+.wp-name {
     font-size: 20px;
-    font-weight: 800;
+    font-weight: 950;
+    color: #0f172a;
+    margin-bottom: 10px;
 }
 
-.del-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+/* Details block */
+.wp-desc {
+    color: rgba(15, 23, 42, 0.75);
+    font-weight: 650;
+    display: grid;
+    gap: 6px;
+    margin-top: 6px;
 }
 
-.del-pill {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.del-date {
-    opacity: 0.9;
-    font-size: 14px;
-}
-
-/* Summary grid */
-.del-summary {
+/* Summary grid (3 cols like your old del-summary) */
+.wl-del-summary {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     margin: 12px 0 14px;
 }
 
-.del-item {
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    background: rgba(255, 255, 255, 0.04);
+.wl-del-item {
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(15, 23, 42, 0.03);
     border-radius: 14px;
-    padding: 12px 12px;
+    padding: 12px;
 }
 
-.del-label {
+.wl-del-label {
     font-size: 12px;
     opacity: 0.75;
     margin-bottom: 6px;
+    font-weight: 850;
+    color: rgba(15, 23, 42, 0.65);
 }
 
-.del-value {
+.wl-del-value {
     font-size: 16px;
-    font-weight: 800;
+    font-weight: 900;
+    color: #0f172a;
 }
 
 /* Notes */
-.del-notes {
-    margin-top: 8px;
+.wl-del-notes {
+    margin-top: 10px;
 }
 
-.del-notesbox {
+.wl-del-notesbox {
     margin-top: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    background: rgba(0, 0, 0, 0.10);
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(15, 23, 42, 0.03);
     border-radius: 14px;
     padding: 12px;
     min-height: 44px;
     line-height: 1.4;
+    color: rgba(15, 23, 42, 0.85);
 }
 
-/* Danger */
-.del-danger {
+/* Danger box (same feel as WorkoutPlans delete) */
+.wp-dangerbox {
     margin-top: 14px;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.06);
+    border-radius: 12px;
+    padding: 12px 14px;
 }
 
-/* Actions */
-.del-actions {
+.wp-danger-title {
+    font-weight: 950;
+    color: #991b1b;
+}
+
+.wp-danger-sub {
+    margin-top: 4px;
+    font-weight: 650;
+    color: rgba(127, 29, 29, 0.85);
+}
+
+/* Actions row */
+.wp-actions {
     display: flex;
     gap: 10px;
+    margin-top: 16px;
     flex-wrap: wrap;
-    margin-top: 14px;
 }
 
 /* Responsive */
 @media (max-width: 820px) {
-    .del-summary {
+    .wl-del-summary {
         grid-template-columns: 1fr;
+    }
+
+    .wp-actions a.wp-newbtn,
+    .wp-actions button.wp-newbtn {
+        flex: 1;
+        justify-content: center;
     }
 }

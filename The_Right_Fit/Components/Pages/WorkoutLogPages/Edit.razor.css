@@ -1,57 +1,79 @@
 /* =========================================
    WorkoutLogs/Edit.razor.css (PAGE ONLY)
+   Match Create page layout (wlog-*)
    Uses global wp-* styles from app.css
    ========================================= */
 
-.wle-grid {
+.wlog-grid {
     display: grid;
-    grid-template-columns: 0.95fr 1.05fr;
+    grid-template-columns: 1.05fr 0.95fr;
     gap: 18px;
 }
 
-.wle-h {
+/* Section headings */
+.wlog-sectionhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.wlog-h {
     font-weight: 950;
     font-size: 18px;
     color: #0f172a;
 }
 
-.wle-h2 {
-    font-weight: 950;
-    font-size: 16px;
-    color: #0f172a;
+.wlog-mini {
+    min-width: 180px;
 }
 
-.wle-fields {
-    display: grid;
-    gap: 12px;
-    margin-top: 14px;
-}
-
-.wle-box {
+/* Inputs look like wp-input but boxed */
+.wlog-box {
     width: 100%;
 }
 
-.wle-notes {
+/* Row card for selected exercise */
+.wlog-rowcard {
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    background: rgba(15, 23, 42, 0.02);
+    border-radius: 12px;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 1.2fr .8fr 1.2fr auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.wlog-exname {
+    font-weight: 950;
+    color: #0f172a;
+    margin-top: 4px;
+}
+
+.wlog-removewrap {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Notes */
+.wlog-notes {
     min-height: 120px;
     resize: vertical;
 }
 
-.wle-help {
-    margin-top: 6px;
-    color: rgba(15, 23, 42, 0.55);
-    font-weight: 650;
-    font-size: 13px;
-}
-
-.wle-actionsbar {
+/* Actions */
+.wlog-actions {
     display: flex;
     gap: 10px;
     margin-top: 16px;
     flex-wrap: wrap;
 }
 
-.wle-alert {
-    margin-bottom: 14px;
+/* Error box */
+.wlog-error {
+    margin-top: 14px;
     background: rgba(239, 68, 68, 0.10);
     border: 1px solid rgba(239, 68, 68, 0.22);
     color: #991b1b;
@@ -60,103 +82,52 @@
     font-weight: 800;
 }
 
-.wle-list {
-    margin-top: 14px;
-    display: grid;
-    gap: 12px;
-}
-
-.wle-item {
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    border-radius: 12px;
-    padding: 12px;
-    background: rgba(15, 23, 42, 0.02);
-}
-
-.wle-ex {
+/* Picker filters */
+.wlog-pickerfilters {
+    margin-top: 12px;
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
-}
-
-.wle-exname {
-    font-weight: 950;
-    color: #0f172a;
-}
-
-.wle-exid {
-    font-weight: 900;
-    font-size: 12px;
-    color: rgba(15, 23, 42, 0.55);
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(15, 23, 42, 0.10);
-    padding: 5px 8px;
-    border-radius: 999px;
-}
-
-.wle-row {
-    margin-top: 10px;
-    display: grid;
-    grid-template-columns: 0.55fr 1.45fr auto;
-    gap: 10px;
-    align-items: end;
-}
-
-.wle-remove {
-    display: flex;
-    align-items: end;
-}
-
-.wle-addhead {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
     gap: 12px;
     flex-wrap: wrap;
 }
 
-.wle-addfilters {
-    margin-top: 10px;
-    display: flex;
+/* Picker list */
+.wlog-exlist {
+    margin-top: 12px;
+    display: grid;
     gap: 10px;
-    flex-wrap: wrap;
-}
-
-.wle-exlist {
-    margin-top: 10px;
-    max-height: 360px;
+    max-height: 420px;
     overflow: auto;
-    display: grid;
-    gap: 8px;
 }
 
-.wle-pick {
+.wlog-exitem {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-    padding: 10px;
+    padding: 10px 12px;
     border: 1px solid rgba(15, 23, 42, 0.08);
     border-radius: 12px;
     background: #fff;
 }
 
-.wle-pickname {
-    font-weight: 800;
-    color: rgba(15, 23, 42, 0.9);
+.wlog-muted {
+    color: rgba(15, 23, 42, 0.55);
+    font-weight: 650;
 }
 
+/* Responsive */
 @media (max-width: 980px) {
-    .wle-grid {
+    .wlog-grid {
         grid-template-columns: 1fr;
     }
 
-    .wle-row {
+    .wlog-rowcard {
         grid-template-columns: 1fr;
     }
 
-    .wle-actionsbar .wp-newbtn {
+    .wlog-actions .wp-newbtn,
+    .wlog-actions .wp-linkbtn {
         flex: 1;
+        justify-content: center;
     }
 }
