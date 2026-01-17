@@ -1,94 +1,221 @@
 ﻿@page "/dietlogs/create"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Data
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
 
-<PageTitle>Create</PageTitle>
+@inject The_Right_FitContext Db
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<h1>Create</h1>
+<PageTitle>Create Diet Log</PageTitle>
 
-<h2>DietLog</h2>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm method="post" Model="DietLog" OnValidSubmit="AddDietLog" FormName="create" Enhance>
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert"/>
-            <div class="mb-3">
-                <label for="userid" class="form-label">UserId:</label> 
-                <InputNumber id="userid" @bind-Value="DietLog.UserId" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.UserId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="fooditemid" class="form-label">FoodItemId:</label> 
-                <InputNumber id="fooditemid" @bind-Value="DietLog.FoodItemId" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.FoodItemId" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="logdate" class="form-label">LogDate:</label> 
-                <InputDate id="logdate" @bind-Value="DietLog.LogDate" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.LogDate" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="mealtype" class="form-label">MealType:</label> 
-                <InputText id="mealtype" @bind-Value="DietLog.MealType" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.MealType" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="quantityservings" class="form-label">QuantityServings:</label> 
-                <InputNumber id="quantityservings" @bind-Value="DietLog.QuantityServings" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.QuantityServings" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="totalcalories" class="form-label">TotalCalories:</label> 
-                <InputNumber id="totalcalories" @bind-Value="DietLog.TotalCalories" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.TotalCalories" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="customfoodname" class="form-label">CustomFoodName:</label> 
-                <InputText id="customfoodname" @bind-Value="DietLog.CustomFoodName" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.CustomFoodName" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="datecreated" class="form-label">DateCreated:</label> 
-                <InputDate id="datecreated" @bind-Value="DietLog.DateCreated" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.DateCreated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="dateupdated" class="form-label">DateUpdated:</label> 
-                <InputDate id="dateupdated" @bind-Value="DietLog.DateUpdated" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.DateUpdated" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="createdby" class="form-label">CreatedBy:</label> 
-                <InputText id="createdby" @bind-Value="DietLog.CreatedBy" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.CreatedBy" class="text-danger" /> 
-            </div>        
-            <div class="mb-3">
-                <label for="updatedby" class="form-label">UpdatedBy:</label> 
-                <InputText id="updatedby" @bind-Value="DietLog.UpdatedBy" class="form-control" /> 
-                <ValidationMessage For="() => DietLog.UpdatedBy" class="text-danger" /> 
-            </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
-        </EditForm>
+<div class="wp">
+
+    <!-- HEADER -->
+    <div class="wp-head">
+        <div>
+            <h1 class="wp-title">Create Diet Log</h1>
+            <div class="wp-sub">Select a food item and servings. Calories auto-calculate.</div>
+        </div>
+
+        <NavLink class="wp-newbtn wp-btn-secondary-black" href="/dietlogs">
+            Back
+        </NavLink>
     </div>
-</div>
 
-<div>
-    <a href="/dietlogs">Back to List</a>
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot create log</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+
+    <EditForm Model="form" OnValidSubmit="Save" class="wp-card" style="padding:18px;">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div style="display:grid; gap:14px;">
+
+            <!-- Log date + meal -->
+            <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px;">
+                <div>
+                    <div class="wp-label">Log Date</div>
+                    <InputDate class="wp-input" @bind-Value="form.LogDate" />
+                    <ValidationMessage For="@(() => form.LogDate)" />
+                </div>
+
+                <div>
+                    <div class="wp-label">Meal Type</div>
+                    <InputSelect class="wp-select" @bind-Value="form.MealType">
+                        <option value="">Select…</option>
+                        <option value="Breakfast">Breakfast</option>
+                        <option value="Lunch">Lunch</option>
+                        <option value="Dinner">Dinner</option>
+                        <option value="Snack">Snack</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => form.MealType)" />
+                </div>
+            </div>
+
+            <!-- Food selection -->
+            <div>
+                <div class="wp-label">Food Item</div>
+                <InputSelect class="wp-select"
+                             @bind-Value="form.FoodItemId"
+                             @bind-Value:after="OnFoodChanged">
+                    <option value="">Select food…</option>
+                    @foreach (var f in foodItems)
+                    {
+                        <option value="@f.Id">@f.Name</option>
+                    }
+                </InputSelect>
+
+                @if (SelectedFood is not null)
+                {
+                    <div class="wp-sub" style="margin-top:6px;">
+                        Serving: <b>@(SelectedFood.ServingSizeDescription ?? "—")</b>
+                        • Calories per serving: <b>@SelectedFood.Calories.ToString("N0")</b> kcal
+                    </div>
+                }
+
+                <ValidationMessage For="@(() => form.FoodItemId)" />
+            </div>
+
+            <!-- Servings + total calories -->
+            <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px;">
+                <div>
+                    <div class="wp-label">Servings</div>
+                    <InputNumber class="wp-input"
+                                 @bind-Value="form.QuantityServings"
+                                 @bind-Value:after="RecalcCalories" />
+                    <ValidationMessage For="@(() => form.QuantityServings)" />
+                </div>
+
+                <div>
+                    <div class="wp-label">Total Calories (kcal)</div>
+                    <!-- better to show read-only as plain input so Blazor doesn't fight binding -->
+                    <input class="wp-input" value="@form.TotalCalories" readonly />
+                    <div class="wp-sub" style="margin-top:6px;">Auto: calories per serving × servings</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex; gap:10px; flex-wrap:wrap; padding-top:4px;">
+                <button type="submit" class="wp-newbtn">Create Log</button>
+                <NavLink class="wp-linkbtn" href="/dietlogs">Cancel</NavLink>
+            </div>
+
+        </div>
+    </EditForm>
+
 </div>
 
 @code {
-    [SupplyParameterFromForm]
-    private DietLog DietLog { get; set; } = new();
+    private string? error;
 
-    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
-    private async Task AddDietLog()
+    private DietLog form = new()
     {
-        using var context = DbFactory.CreateDbContext();
-        context.DietLog.Add(DietLog);
-        await context.SaveChangesAsync();
-        NavigationManager.NavigateTo("/dietlogs");
+        LogDate = DateTime.Today,
+        MealType = "",
+        QuantityServings = 1,
+        TotalCalories = 0,
+        // OwnerIdentityUserId will be set on save
+        // UserId will be set on save (kept for now)
+    };
+
+    private List<FoodItems> foodItems = new();
+
+    private FoodItems? SelectedFood =>
+        form.FoodItemId.HasValue
+            ? foodItems.FirstOrDefault(x => x.Id == form.FoodItemId.Value)
+            : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        error = null;
+
+        // Must be logged in
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (auth.User.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Account/Login", true);
+            return;
+        }
+
+        // Load foods
+        foodItems = await Db.FoodItems
+            .AsNoTracking()
+            .Where(x => x.IsCustom == 0)
+            .OrderBy(x => x.Name)
+            .ToListAsync();
+
+        RecalcCalories();
+    }
+
+    private void OnFoodChanged()
+    {
+        RecalcCalories();
+    }
+
+    private void RecalcCalories()
+    {
+        var food = SelectedFood;
+
+        var servings = form.QuantityServings;
+        if (servings < 0) servings = 0;
+
+        var cps = food?.Calories ?? 0; // Calories per serving
+        form.TotalCalories = (int)Math.Round(cps * servings, MidpointRounding.AwayFromZero);
+    }
+
+    private async Task Save()
+    {
+        error = null;
+
+        // Must select a food item (since you said don't add custom foodname)
+        if (!form.FoodItemId.HasValue)
+        {
+            error = "Please select a food item.";
+            return;
+        }
+
+        // Ensure calories correct
+        RecalcCalories();
+
+        // Get logged-in Identity user id
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Account/Login", true);
+            return;
+        }
+
+        var uid = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(uid))
+        {
+            error = "Cannot read your user id.";
+            return;
+        }
+
+        // ✅ THIS is what stops cross-user leakage
+        form.OwnerIdentityUserId = uid;
+
+        // ✅ If you still have int UserId in your entity, you MUST set something.
+        // Best fix: remove UserId from DietLog/WorkoutLog and only use OwnerIdentityUserId.
+        // For now: keep placeholder so insert doesn't fail.
+        if (form.UserId == 0)
+            form.UserId = 1;
+
+        Db.DietLog.Add(form);
+        await Db.SaveChangesAsync();
+
+        Nav.NavigateTo("/dietlogs");
     }
 }

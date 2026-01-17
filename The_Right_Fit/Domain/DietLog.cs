@@ -1,26 +1,25 @@
-﻿namespace The_Right_Fit.Domain
+﻿using System.ComponentModel.DataAnnotations;
 
+namespace The_Right_Fit.Domain
 {
     public class DietLog : BaseDomainModel
     {
-        public int UserId { get; set; }
-        public int? FoodItemId { get; set; }
+        
+        public string OwnerIdentityUserId { get; set; } = string.Empty;
 
-        public DateTime LogDate { get; set; }       // Date of entry
-        public string? MealType { get; set; }       // "Breakfast", "Lunch", "Dinner", "Snack"
+        // you can keep this for now (but don't use it for security/filtering)
+        public int UserId { get; set; }
+
+        public int? FoodItemId { get; set; }
+        public DateTime LogDate { get; set; }
+        public string? MealType { get; set; }
 
         public double QuantityServings { get; set; }
-
         public int TotalCalories { get; set; }
 
-        // Custom food fields (if FoodItemId is null)
         public string? CustomFoodName { get; set; }
-
-
     }
 }
-
-
 
 
 

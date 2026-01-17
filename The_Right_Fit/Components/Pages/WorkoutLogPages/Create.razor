@@ -1,9 +1,13 @@
 ﻿@page "/workoutlogs/create"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
+
 @inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
 <PageTitle>New Workout Log</PageTitle>
@@ -109,7 +113,7 @@
                         </button>
 
                         <button type="button"
-                                class="wp-newbtn wp-btn-secondary-black"
+                                class="wp-linkbtn"
                                 @onclick="@(() => Nav.NavigateTo("/workoutlogs"))">
                             Cancel
                         </button>
@@ -198,6 +202,9 @@
     private string exerciseSearch = "";
     private string selectedMuscleGroup = "";
 
+    // Auth
+    private string? identityUserId;
+
     // user-editable values
     private LogForm form = new()
     {
@@ -218,7 +225,6 @@
         public int ExerciseId { get; set; }
         public string ExerciseName { get; set; } = "";
 
-        // ✅ MATCH YOUR DOMAIN MODEL
         public int ActualSets { get; set; } = 3;
         public string ActualReps { get; set; } = "12, 10, 8";
     }
@@ -226,6 +232,25 @@
     protected override async Task OnInitializedAsync()
     {
         loading = true;
+        error = null;
+
+        // ✅ Get logged-in Identity user id (so we can set OwnerIdentityUserId)
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Account/Login", true);
+            return;
+        }
+
+        identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(identityUserId))
+        {
+            error = "Cannot read your user id.";
+            loading = false;
+            return;
+        }
 
         using var db = DbFactory.CreateDbContext();
 
@@ -319,53 +344,70 @@
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(identityUserId))
+        {
+            error = "You are not logged in.";
+            return;
+        }
+
         saving = true;
 
-        using var db = DbFactory.CreateDbContext();
-
-        // ✅ Replace this with your real mapping later
-        int currentUserId = 1;
-
-        var now = DateTime.Now;
-
-        var log = new WorkoutLog
+        try
         {
-            UserId = currentUserId,
-            WorkoutPlanId = null,
-            WorkoutDateTime = now,
-            DurationMinutes = form.DurationMinutes,
-            Notes = form.Notes,
+            using var db = DbFactory.CreateDbContext();
 
-            DateCreated = now,
-            DateUpdated = now,
-            CreatedBy = "System",
-            UpdatedBy = "System"
-        };
+            var now = DateTime.Now;
 
-        db.WorkoutLog.Add(log);
-        await db.SaveChangesAsync();
-
-        foreach (var r in rows)
-        {
-            db.WorkoutLogExercise.Add(new WorkoutLogExercise
+            var log = new WorkoutLog
             {
-                WorkoutLogId = log.Id,
-                ExerciseId = r.ExerciseId,
+                // ✅ THIS IS THE IMPORTANT FIX (same idea as DietLog)
+                OwnerIdentityUserId = identityUserId,
 
-                // ✅ CORRECT PROPERTY NAMES
-                ActualSets = r.ActualSets,
-                ActualReps = r.ActualReps,
+                // You can keep this legacy int if you still need it, but DON'T use it for auth
+                UserId = 0,
+
+                WorkoutPlanId = null,
+                WorkoutDateTime = now,
+                DurationMinutes = form.DurationMinutes,
+                Notes = form.Notes,
 
                 DateCreated = now,
                 DateUpdated = now,
-                CreatedBy = "System",
-                UpdatedBy = "System"
-            });
+                CreatedBy = identityUserId,
+                UpdatedBy = identityUserId
+            };
+
+            db.WorkoutLog.Add(log);
+            await db.SaveChangesAsync();
+
+            foreach (var r in rows)
+            {
+                db.WorkoutLogExercise.Add(new WorkoutLogExercise
+                {
+                    WorkoutLogId = log.Id,
+                    ExerciseId = r.ExerciseId,
+
+                    ActualSets = r.ActualSets,
+                    ActualReps = r.ActualReps,
+
+                    DateCreated = now,
+                    DateUpdated = now,
+                    CreatedBy = identityUserId,
+                    UpdatedBy = identityUserId
+                });
+            }
+
+            await db.SaveChangesAsync();
+
+            Nav.NavigateTo("/workoutlogs");
         }
-
-        await db.SaveChangesAsync();
-
-        saving = false;
-        Nav.NavigateTo("/workoutlogs");
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
     }
 }

@@ -1,10 +1,15 @@
 ﻿@page "/dietlogs"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Data
 @using The_Right_Fit.Domain
+
 @inject The_Right_FitContext Db
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
 <PageTitle>Diet Logs</PageTitle>
 
@@ -24,52 +29,100 @@
     </div>
 
     <!-- FILTERS -->
-    <div class="wl-filters">
+    <div class="wp-card wl-filters">
 
-        <div class="wl-filter">
-            <div class="wp-label">From</div>
-            <InputDate class="wl-input" @bind-Value="fromDate" />
+        <div class="wl-filters-head">
+            <div>
+                <div class="wl-filters-title">Filters</div>
+                <div class="wl-filters-sub">Narrow down logs by date, meal, calories, or food.</div>
+            </div>
+
+            <button class="wp-linkbtn" @onclick="ResetFilters">Reset</button>
         </div>
 
-        <div class="wl-filter">
-            <div class="wp-label">To</div>
-            <InputDate class="wl-input" @bind-Value="toDate" />
-        </div>
+        <div class="wl-filters-grid">
 
-        <div class="wl-filter">
-            <div class="wp-label">Meal Type</div>
-            <select class="wl-select" @bind="mealType">
-                <option value="">Any</option>
-                <option value="Breakfast">Breakfast</option>
-                <option value="Lunch">Lunch</option>
-                <option value="Dinner">Dinner</option>
-                <option value="Snack">Snack</option>
-            </select>
-        </div>
+            <div class="wl-filter">
+                <div class="wp-label">From</div>
+                <InputDate class="wp-input" @bind-Value="fromDate" />
+            </div>
 
-        <div class="wl-filter">
-            <div class="wp-label">Min Calories</div>
-            <select class="wl-select" @bind="minCaloriesText">
-                <option value="">Any</option>
-                <option value="200">200+</option>
-                <option value="400">400+</option>
-                <option value="600">600+</option>
-                <option value="800">800+</option>
-                <option value="1000">1000+</option>
-            </select>
-        </div>
+            <div class="wl-filter">
+                <div class="wp-label">To</div>
+                <InputDate class="wp-input" @bind-Value="toDate" />
+            </div>
 
-        <div class="wl-filter">
-            <div class="wp-label">Search Food</div>
-            <div class="wl-searchbox">
-                <span class="wl-searchicon">🔍</span>
-                <input class="wl-input"
-                       placeholder="Chicken rice, oats..."
-                       @bind="search"
-                       @bind:event="oninput" />
+            <div class="wl-filter">
+                <div class="wp-label">Meal Type</div>
+                <select class="wp-select" @bind="mealType">
+                    <option value="">Any</option>
+                    <option value="Breakfast">Breakfast</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Dinner">Dinner</option>
+                    <option value="Snack">Snack</option>
+                </select>
+            </div>
+
+            <div class="wl-filter">
+                <div class="wp-label">Min Calories</div>
+                <select class="wp-select" @bind="minCaloriesText">
+                    <option value="">Any</option>
+                    <option value="200">200+</option>
+                    <option value="400">400+</option>
+                    <option value="600">600+</option>
+                    <option value="800">800+</option>
+                    <option value="1000">1000+</option>
+                </select>
+            </div>
+
+            <div class="wl-filter wl-filter-span2">
+                <div class="wp-label">Search Food</div>
+                <div class="wp-searchbox">
+                    <span class="wp-searchicon">🔍</span>
+                    <input class="wp-input"
+                           placeholder="Chicken rice, oats..."
+                           @bind="search"
+                           @bind:event="oninput" />
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CALORIE TRACKER -->
+    <div class="wp-card dl-tracker">
+        <div class="dl-tracker-top">
+            <div>
+                <div class="dl-tracker-title">Calorie Tracker</div>
+                <div class="dl-tracker-sub">Based on current filters</div>
+            </div>
+
+            <div class="dl-target">
+                <div class="wp-label">Daily Target (kcal)</div>
+                <InputNumber class="wp-input" @bind-Value="dailyTargetKcal" />
             </div>
         </div>
 
+        <div class="dl-metrics">
+            <div class="dl-metric">
+                <div class="dl-metric-label">Total Calories</div>
+                <div class="dl-metric-value">@TotalCaloriesFiltered</div>
+            </div>
+
+            <div class="dl-metric">
+                <div class="dl-metric-label">Days</div>
+                <div class="dl-metric-value">@DaysInRange</div>
+            </div>
+
+            <div class="dl-metric">
+                <div class="dl-metric-label">Daily Avg</div>
+                <div class="dl-metric-value">@DailyAverageCalories.ToString("0")</div>
+            </div>
+        </div>
+
+        <div class="dl-bar">
+            <div class="dl-barfill" style="width:@($"{ProgressPercent:0.##}%")"></div>
+        </div>
     </div>
 
     <!-- CONTENT -->
@@ -89,45 +142,41 @@
         <div class="wl-grid">
             @foreach (var x in FilteredLogs)
             {
-                <div class="wl-card">
+                <div class="wp-card wl-card">
 
                     <div class="wl-cardtop">
-                        <span class="wl-tag">
-                            @(!string.IsNullOrWhiteSpace(x.MealType) ? x.MealType : "Meal")
-                        </span>
-
+                        <span class="wl-tag">@x.MealType</span>
                         <span class="wl-date">@x.LogDate.ToString("dd MMM yyyy")</span>
                     </div>
 
                     <div class="wl-main">
                         <div class="wl-duration">
-                            <span class="wl-clock">🍽</span>
-                            <span class="wl-duration-text">@FoodLabel(x)</span>
+                            🍽 @FoodLabel(x)
                         </div>
 
                         <div class="dl-chips">
-                            <span class="dl-chip"><b>Servings</b> @x.QuantityServings</span>
-                            <span class="dl-chip"><b>Calories</b> @x.TotalCalories kcal</span>
+                            <span class="dl-chip">@x.QuantityServings servings</span>
+                            <span class="dl-chip">@x.TotalCalories kcal</span>
                         </div>
-
                     </div>
 
                     <div class="wl-cardbottom">
-
-                        <NavLink class="wp-newbtn wl-viewbtn" href="@($"/dietlogs/details/{x.Id}")">
-                            View Details
+                        <NavLink class="wp-newbtn wl-btn-sm"
+                                 href="@($"/dietlogs/details/{x.Id}")">
+                            View
                         </NavLink>
 
                         <div class="wl-actions">
-                            <NavLink class="wp-linkbtn" href="@($"/dietlogs/edit/{x.Id}")">
+                            <NavLink class="wp-linkbtn"
+                                     href="@($"/dietlogs/edit/{x.Id}")">
                                 Edit
                             </NavLink>
 
-                            <NavLink class="wp-linkbtn wp-linkbtn-danger" href="@($"/dietlogs/delete/{x.Id}")">
+                            <NavLink class="wp-linkbtn wp-linkbtn-danger"
+                                     href="@($"/dietlogs/delete/{x.Id}")">
                                 Delete
                             </NavLink>
                         </div>
-
                     </div>
 
                 </div>
@@ -139,9 +188,9 @@
 
 @code {
     private bool loading = true;
-    private List<DietLog> allLogs = new();
+    private string? identityUserId;
 
-    // If you have FoodItem entity and want to show names:
+    private List<DietLog> allLogs = new();
     private Dictionary<int, string> foodNameById = new();
 
     // filters
@@ -151,36 +200,40 @@
     private string? minCaloriesText = "";
     private string search = "";
 
+    // tracker
+    private int dailyTargetKcal = 2000;
+
     protected override async Task OnInitializedAsync()
     {
-        loading = true;
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
+        {
+            Nav.NavigateTo("/Account/Login", true);
+            return;
+        }
+
+        identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
 
         allLogs = await Db.DietLog
             .AsNoTracking()
+            .Where(x => x.OwnerIdentityUserId == identityUserId) // 🔐 FIX
             .OrderByDescending(x => x.LogDate)
-            .ThenByDescending(x => x.Id)
             .ToListAsync();
 
-        // OPTIONAL: if you have Db.FoodItems (or Db.FoodItem) table, load names so we can display them.
-        // Adjust table name to your actual DbSet.
-        try
-        {
-            var ids = allLogs.Where(x => x.FoodItemId.HasValue).Select(x => x.FoodItemId!.Value).Distinct().ToList();
-            if (ids.Count > 0)
-            {
-                // Change Db.FoodItems to your real DbSet name
-                var foods = await Db.FoodItems
-                    .AsNoTracking()
-                    .Where(f => ids.Contains(f.Id))
-                    .Select(f => new { f.Id, f.Name })
-                    .ToListAsync();
+        var foodIds = allLogs
+            .Where(x => x.FoodItemId.HasValue)
+            .Select(x => x.FoodItemId!.Value)
+            .Distinct()
+            .ToList();
 
-                foodNameById = foods.ToDictionary(x => x.Id, x => x.Name);
-            }
-        }
-        catch
+        if (foodIds.Count > 0)
         {
-            // If you don't have FoodItems table yet, ignore.
+            foodNameById = await Db.FoodItems
+                .AsNoTracking()
+                .Where(f => foodIds.Contains(f.Id))
+                .ToDictionaryAsync(f => f.Id, f => f.Name!);
         }
 
         loading = false;
@@ -193,36 +246,24 @@
             IEnumerable<DietLog> q = allLogs;
 
             if (fromDate.HasValue)
-            {
-                var fd = fromDate.Value.Date;
-                q = q.Where(x => x.LogDate >= fd);
-            }
+                q = q.Where(x => x.LogDate >= fromDate.Value.Date);
 
             if (toDate.HasValue)
-            {
-                var td = toDate.Value.Date.AddDays(1).AddTicks(-1);
-                q = q.Where(x => x.LogDate <= td);
-            }
+                q = q.Where(x => x.LogDate <= toDate.Value.Date.AddDays(1).AddTicks(-1));
 
             if (!string.IsNullOrWhiteSpace(mealType))
-            {
-                q = q.Where(x => (x.MealType ?? "") == mealType);
-            }
+                q = q.Where(x => x.MealType == mealType);
 
-            if (!string.IsNullOrWhiteSpace(minCaloriesText) &&
-                int.TryParse(minCaloriesText, out var minC))
-            {
+            if (int.TryParse(minCaloriesText, out var minC))
                 q = q.Where(x => x.TotalCalories >= minC);
-            }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.Trim();
                 q = q.Where(x =>
-                    ((x.CustomFoodName ?? "").Contains(s, StringComparison.OrdinalIgnoreCase))
-                    // also search by FoodItemId name if we have it
-                    || (x.FoodItemId.HasValue && foodNameById.TryGetValue(x.FoodItemId.Value, out var nm)
-                        && nm.Contains(s, StringComparison.OrdinalIgnoreCase))
+                    (x.CustomFoodName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    (x.FoodItemId.HasValue &&
+                     foodNameById.TryGetValue(x.FoodItemId.Value, out var n) &&
+                     n.Contains(search, StringComparison.OrdinalIgnoreCase))
                 );
             }
 
@@ -230,11 +271,32 @@
         }
     }
 
+    private int TotalCaloriesFiltered => FilteredLogs.Sum(x => x.TotalCalories);
+
+    private int DaysInRange =>
+        FilteredLogs.Select(x => x.LogDate.Date).Distinct().Count();
+
+    private double DailyAverageCalories =>
+        DaysInRange == 0 ? 0 : (double)TotalCaloriesFiltered / DaysInRange;
+
+    private double ProgressPercent =>
+        dailyTargetKcal == 0 ? 0 : Math.Min(100, (DailyAverageCalories / dailyTargetKcal) * 100);
+
     private string FoodLabel(DietLog x)
     {
-        if (x.FoodItemId.HasValue && foodNameById.TryGetValue(x.FoodItemId.Value, out var name))
+        if (x.FoodItemId.HasValue &&
+            foodNameById.TryGetValue(x.FoodItemId.Value, out var name))
             return name;
 
-        return !string.IsNullOrWhiteSpace(x.CustomFoodName) ? x.CustomFoodName! : "Custom food";
+        return x.CustomFoodName ?? "Food";
+    }
+
+    private void ResetFilters()
+    {
+        fromDate = null;
+        toDate = null;
+        mealType = "";
+        minCaloriesText = "";
+        search = "";
     }
 }

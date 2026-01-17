@@ -1,47 +1,66 @@
-/* =========================================================
-   WorkoutLogs page CSS
-   IMPORTANT: filename must match the .razor file:
-   WorkoutLogs.razor  -> WorkoutLogs.razor.css
-   Index.razor        -> Index.razor.css
+﻿/* =========================================================
+   WorkoutLogs.razor.css (CLEAN + FIXED)
+   - Filters panel + cards
+   - Calendar/InputDate forced to match DietLogs rounded look
    ========================================================= */
 
 /* ---------- FILTERS ---------- */
 .wl-filters {
     margin-top: 14px;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 14px;
-    padding: 14px;
+    padding: 16px;
     border-radius: 12px;
     background: #fff;
     border: 1px solid rgba(15,23,42,.10);
     box-shadow: 0 10px 28px rgba(2,6,23,.06);
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
 }
 
 .wl-filter {
     min-width: 0;
+    display: grid;
+    gap: 8px;
 }
 
+/* base inputs/selects */
 .wl-input,
 .wl-select {
     width: 100%;
     height: 44px;
+    border: 1px solid rgba(15, 23, 42, 0.18);
     border-radius: 10px;
-    border: 1px solid rgba(15,23,42,.12);
+    padding: 12px 14px; /* match DietLogs feel */
     background: #fff;
-    padding: 10px 12px;
-    font-weight: 700;
+    color: rgba(15, 23, 42, 0.85);
     font-size: 15.5px;
-    color: rgba(15,23,42,.85);
+    font-weight: 700;
     outline: none;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
     .wl-input:focus,
     .wl-select:focus {
-        border-color: rgba(59,130,246,.35);
-        box-shadow: 0 0 0 3px rgba(59,130,246,.20);
+        border-color: rgba(59, 130, 246, 0.45);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
     }
 
+    .wl-input::placeholder {
+        color: rgba(15, 23, 42, 0.45);
+        font-weight: 650;
+    }
+
+/* nicer select caret */
+.wl-select {
+    background-image: linear-gradient(45deg, transparent 50%, rgba(15,23,42,.55) 50%), linear-gradient(135deg, rgba(15,23,42,.55) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 34px;
+}
+
+/* search icon */
 .wl-searchbox {
     position: relative;
 }
@@ -53,11 +72,38 @@
     transform: translateY(-50%);
     opacity: .55;
     font-size: 14px;
+    pointer-events: none;
 }
 
 .wl-searchbox .wl-input {
     padding-left: 34px;
 }
+
+/* ✅ THE FIX: force the actual rendered InputDate element */
+.wl-filters input[type="date"] {
+    border-radius: 10px !important;
+    border: 1px solid rgba(15, 23, 42, 0.18) !important;
+    padding: 12px 14px !important;
+    height: 44px !important;
+    background: #fff !important;
+    color: rgba(15, 23, 42, 0.85) !important;
+    font-size: 15.5px !important;
+    font-weight: 700 !important;
+    outline: none !important;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+    .wl-filters input[type="date"]:focus {
+        border-color: rgba(59, 130, 246, 0.45) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18) !important;
+    }
+
+    /* calendar icon (webkit browsers only) */
+    .wl-filters input[type="date"]::-webkit-calendar-picker-indicator {
+        opacity: .7;
+        cursor: pointer;
+    }
 
 /* ---------- GRID ---------- */
 .wl-grid {

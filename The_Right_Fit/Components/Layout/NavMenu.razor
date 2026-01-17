@@ -13,10 +13,23 @@
         <AuthorizeView Context="auth">
             <Authorized>
 
-                <NavLink class="trf-toplink" href="/dashboard" Match="NavLinkMatch.Prefix">
-                    Dashboard
-                </NavLink>
+                @* Show these ONLY for non-admin *@
+                @if (!auth.User.IsInRole("Administrator"))
+                {
+                    <NavLink class="trf-toplink" href="/dashboard" Match="NavLinkMatch.Prefix">
+                        Dashboard
+                    </NavLink>
 
+                    <NavLink class="trf-toplink" href="/workoutlogs" Match="NavLinkMatch.Prefix">
+                        Workout Logs
+                    </NavLink>
+
+                    <NavLink class="trf-toplink" href="/dietlogs" Match="NavLinkMatch.Prefix">
+                        Diet Logs
+                    </NavLink>
+                }
+
+                @* Everyone logged in sees these *@
                 <NavLink class="trf-toplink" href="/workoutplans" Match="NavLinkMatch.Prefix">
                     Workout Plans
                 </NavLink>
@@ -25,18 +38,9 @@
                     Exercises
                 </NavLink>
 
-                <NavLink class="trf-toplink" href="/workoutlogs" Match="NavLinkMatch.Prefix">
-                    Workout Logs
-                </NavLink>
-
-                <NavLink class="trf-toplink" href="/dietlogs" Match="NavLinkMatch.Prefix">
-                    Diet Logs
-                </NavLink>
-
                 <NavLink class="trf-toplink" href="/fooditems" Match="NavLinkMatch.Prefix">
                     Food Items
                 </NavLink>
-
 
             </Authorized>
 

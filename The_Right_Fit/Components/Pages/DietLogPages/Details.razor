@@ -1,66 +1,194 @@
-﻿@page "/dietlogs/details"
+﻿@page "/dietlogs/details/{Id:int}"
+@rendermode InteractiveServer
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
+@using The_Right_Fit.Data
 @using The_Right_Fit.Domain
-@inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
-@inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+@inject The_Right_FitContext Db
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
-<h1>Details</h1>
+<PageTitle>Diet Log Details</PageTitle>
 
-<div>
-    <h2>DietLog</h2>
-    <hr />
-    @if (dietlog is null)
-    {
-        <p><em>Loading...</em></p>
-    }
-    else {
-        <dl class="row">
-            <dt class="col-sm-2">UserId</dt>
-            <dd class="col-sm-10">@dietlog.UserId</dd>
-            <dt class="col-sm-2">FoodItemId</dt>
-            <dd class="col-sm-10">@dietlog.FoodItemId</dd>
-            <dt class="col-sm-2">LogDate</dt>
-            <dd class="col-sm-10">@dietlog.LogDate</dd>
-            <dt class="col-sm-2">MealType</dt>
-            <dd class="col-sm-10">@dietlog.MealType</dd>
-            <dt class="col-sm-2">QuantityServings</dt>
-            <dd class="col-sm-10">@dietlog.QuantityServings</dd>
-            <dt class="col-sm-2">TotalCalories</dt>
-            <dd class="col-sm-10">@dietlog.TotalCalories</dd>
-            <dt class="col-sm-2">CustomFoodName</dt>
-            <dd class="col-sm-10">@dietlog.CustomFoodName</dd>
-            <dt class="col-sm-2">DateCreated</dt>
-            <dd class="col-sm-10">@dietlog.DateCreated</dd>
-            <dt class="col-sm-2">DateUpdated</dt>
-            <dd class="col-sm-10">@dietlog.DateUpdated</dd>
-            <dt class="col-sm-2">CreatedBy</dt>
-            <dd class="col-sm-10">@dietlog.CreatedBy</dd>
-            <dt class="col-sm-2">UpdatedBy</dt>
-            <dd class="col-sm-10">@dietlog.UpdatedBy</dd>
-        </dl>
+<div class="wp">
+
+    <!-- HEADER -->
+    <div class="wp-head">
         <div>
-            <a href="@($"/dietlogs/edit?id={dietlog.Id}")">Edit</a> |
-            <a href="@($"/dietlogs")">Back to List</a>
+            <h1 class="wp-title">Diet Log Details</h1>
+            <div class="wp-sub">View your logged meal information.</div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <NavLink class="wp-linkbtn" href="/dietlogs">Back</NavLink>
+
+            @if (canManage)
+            {
+                <NavLink class="wp-newbtn" href="@($"/dietlogs/edit/{Id}")">Edit</NavLink>
+            }
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="wp-loading">Loading diet log…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
+    }
+    else if (log is not null)
+    {
+        <div class="wp-card" style="padding:18px;">
+
+            <!-- Top strip -->
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span class="wl-tag">
+                    @(!string.IsNullOrWhiteSpace(log.MealType) ? log.MealType : "Meal")
+                </span>
+
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <span class="wl-date">@log.LogDate.ToString("ddd, dd MMM yyyy")</span>
+                </div>
+            </div>
+
+            <div style="margin-top:14px; display:grid; gap:12px;">
+
+                <!-- Highlight summary -->
+                <div class="wp-card" style="padding:14px; border:1px solid rgba(15,23,42,.08); box-shadow:none;">
+                    <div class="wp-label">Food</div>
+                    <div style="font-size:20px; font-weight:950; letter-spacing:-0.02em;">
+                        @FoodName
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(ServingSize) && ServingSize != "—")
+                    {
+                        <div class="wp-sub" style="margin-top:4px;">
+                            Serving size: <b>@ServingSize</b>
+                        </div>
+                    }
+                </div>
+
+                <!-- Metrics -->
+                <div style="display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:12px;">
+                    <div class="wp-card" style="padding:14px; border:1px solid rgba(15,23,42,.08); box-shadow:none;">
+                        <div class="wp-label">Servings</div>
+                        <div style="font-size:20px; font-weight:950;">@log.QuantityServings</div>
+                        <div class="wp-sub">Quantity logged</div>
+                    </div>
+
+                    <div class="wp-card" style="padding:14px; border:1px solid rgba(15,23,42,.08); box-shadow:none;">
+                        <div class="wp-label">Calories</div>
+                        <div style="font-size:20px; font-weight:950;">@log.TotalCalories.ToString("N0") kcal</div>
+                        <div class="wp-sub">Total calories</div>
+                    </div>
+
+                    <div class="wp-card" style="padding:14px; border:1px solid rgba(15,23,42,.08); box-shadow:none;">
+                        <div class="wp-label">Food Item ID</div>
+                        <div style="font-size:20px; font-weight:950;">
+                            @(log.FoodItemId?.ToString() ?? "—")
+                        </div>
+                        <div class="wp-sub">Reference</div>
+                    </div>
+                </div>
+
+                <!-- Footer actions -->
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:2px;">
+                    <div class="wp-sub">
+                        Logged on <b>@log.LogDate.ToString("dd MMM yyyy")</b>
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        @if (canManage)
+                        {
+                            <NavLink class="wp-newbtn wl-viewbtn" href="@($"/dietlogs/edit/{Id}")">
+                                Edit Log
+                            </NavLink>
+
+                            <NavLink class="wp-linkbtn wp-linkbtn-danger" href="@($"/dietlogs/delete/{Id}")">
+                                Delete
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+
+            </div>
         </div>
     }
 </div>
 
 @code {
-    private DietLog? dietlog;
+    [Parameter] public int Id { get; set; }
 
-    [SupplyParameterFromQuery]
-    private int Id { get; set; }
+    private bool isLoading = true;
+    private string? error;
+
+    private DietLog? log;
+    private FoodItems? food;
+
+    private string? identityUserId;
+    private bool isAdmin;
+    private bool canManage;
+
+    private string FoodName => food?.Name ?? (log?.FoodItemId is null ? "—" : $"Food #{log.FoodItemId}");
+    private string ServingSize => food?.ServingSizeDescription ?? "—";
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
-        dietlog = await context.DietLog.FirstOrDefaultAsync(m => m.Id == Id);
+        isLoading = true;
+        error = null;
 
-        if (dietlog is null)
+        // auth
+        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = auth.User;
+
+        if (user.Identity?.IsAuthenticated != true)
         {
-            NavigationManager.NavigateTo("notfound");
+            Nav.NavigateTo("/Account/Login", true);
+            return;
         }
+
+        identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        isAdmin = user.IsInRole("Administrator");
+
+        // load log
+        log = await Db.DietLog
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == Id);
+
+        if (log is null)
+        {
+            error = "This diet log does not exist.";
+            isLoading = false;
+            return;
+        }
+
+        // ✅ ownership check (so other users cannot view)
+        // Admin rule: up to you. Here: admin can view all, users only own.
+        if (!isAdmin && !string.Equals(log.OwnerIdentityUserId, identityUserId, StringComparison.Ordinal))
+        {
+            error = "You don't have access to this diet log.";
+            log = null;
+            isLoading = false;
+            return;
+        }
+
+        // can manage (edit/delete)
+        canManage = isAdmin || string.Equals(log.OwnerIdentityUserId, identityUserId, StringComparison.Ordinal);
+
+        // load food
+        if (log.FoodItemId.HasValue)
+        {
+            food = await Db.FoodItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == log.FoodItemId.Value);
+        }
+
+        isLoading = false;
     }
 }

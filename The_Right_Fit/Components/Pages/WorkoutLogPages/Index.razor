@@ -1,10 +1,15 @@
 ﻿@page "/workoutlogs"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Data
 @using The_Right_Fit.Domain
+
 @inject The_Right_FitContext Db
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
 
 <PageTitle>Workout Logs</PageTitle>
 
@@ -28,12 +33,12 @@
 
         <div class="wl-filter">
             <div class="wp-label">From</div>
-            <InputDate class="wl-input" @bind-Value="fromDate" />
+            <InputDate class="wp-input" @bind-Value="fromDate" />
         </div>
 
         <div class="wl-filter">
             <div class="wp-label">To</div>
-            <InputDate class="wl-input" @bind-Value="toDate" />
+            <InputDate class="wp-input" @bind-Value="toDate" />
         </div>
 
         <div class="wl-filter">
@@ -65,6 +70,13 @@
     @if (loading)
     {
         <div class="wp-loading">Loading workout logs…</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="wp-empty">
+            <div class="wp-empty-title">Cannot load workout logs</div>
+            <div class="wp-empty-sub">@error</div>
+        </div>
     }
     else if (FilteredLogs.Count == 0)
     {
@@ -106,9 +118,7 @@
                             View Details
                         </NavLink>
 
-
                         <div class="wl-actions">
-                            <!-- Use global wp button styles so they don't look like hyperlinks -->
                             <NavLink class="wp-linkbtn" href="@($"/workoutlogs/edit/{x.Id}")">
                                 Edit
                             </NavLink>
@@ -129,7 +139,12 @@
 
 @code {
     private bool loading = true;
+    private string? error;
+
     private List<WorkoutLog> allLogs = new();
+
+    // Auth
+    private string? identityUserId;
 
     // filters
     private DateTime? fromDate;
@@ -140,14 +155,39 @@
     protected override async Task OnInitializedAsync()
     {
         loading = true;
+        error = null;
 
-        allLogs = await Db.WorkoutLog
-            .AsNoTracking()
-            .OrderByDescending(x => x.WorkoutDateTime)
-            .ThenByDescending(x => x.Id)
-            .ToListAsync();
+        try
+        {
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
 
-        loading = false;
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Account/Login", true);
+                return;
+            }
+
+            identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(identityUserId))
+                throw new Exception("Cannot read your user id.");
+
+            // ✅ ONLY load this user's logs (fixes "other users logs appear")
+            allLogs = await Db.WorkoutLog
+                .AsNoTracking()
+                .Where(x => x.OwnerIdentityUserId == identityUserId)
+                .OrderByDescending(x => x.WorkoutDateTime)
+                .ThenByDescending(x => x.Id)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
     }
 
     private List<WorkoutLog> FilteredLogs
