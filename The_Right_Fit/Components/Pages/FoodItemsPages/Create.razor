@@ -18,7 +18,7 @@
     <div class="wp-head">
         <div>
             <h1 class="wp-title">Create Food Item</h1>
-            <div class="wp-sub">Add a custom food item. Audit fields are set automatically.</div>
+            <div class="wp-sub">Add a food item. Admin items become Standard (global). Users create Custom.</div>
         </div>
 
         <a class="wp-linkbtn" href="/fooditems">Back</a>
@@ -72,8 +72,9 @@
     private FoodItems food = new();
     private string? error;
 
-    private string? currentUserId;   // ✅ GUID string
+    private string? currentUserId;
     private string displayName = "User";
+    private bool isAdmin = false;
     private bool ready = false;
 
     protected override async Task OnInitializedAsync()
@@ -102,6 +103,9 @@
             return;
         }
 
+        // ✅ match your FoodItems index page check
+        isAdmin = user.IsInRole("Admin") || user.IsInRole("Administrator");
+
         ready = true;
     }
 
@@ -117,10 +121,21 @@
         {
             await using var db = await DbFactory.CreateDbContextAsync();
 
-            // ✅ Set ownership + audit automatically
-            food.IsCustom = 1; // always custom for user-created
-            food.CreatedByUserId = currentUserId; // ✅ GUID stored
+            // ✅ OPTION 1:
+            // Admin creates GLOBAL (Standard) food so all users can see it.
+            // Normal users create Custom food (owned by them).
+            if (isAdmin)
+            {
+                food.IsCustom = 0;                 // Standard/global
+                food.CreatedByUserId = null;       // If DB disallows null, set to currentUserId instead
+            }
+            else
+            {
+                food.IsCustom = 1;                 // Custom
+                food.CreatedByUserId = currentUserId;
+            }
 
+            // Audit
             food.CreatedBy = displayName;
             food.DateCreated = DateTime.Now;
 
@@ -130,11 +145,14 @@
             db.FoodItems.Add(food);
             await db.SaveChangesAsync();
 
-            Nav.NavigateTo("/fooditems");
+            Nav.NavigateTo("/fooditems", true);
         }
         catch (DbUpdateException ex)
         {
-            error = ex.InnerException?.Message ?? ex.Message;
+            error =
+                ex.InnerException?.InnerException?.Message
+                ?? ex.InnerException?.Message
+                ?? ex.Message;
         }
         catch (Exception ex)
         {

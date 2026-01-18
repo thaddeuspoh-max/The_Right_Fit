@@ -143,7 +143,7 @@
     private string? error;
 
     private bool isAdmin;
-    private string? currentUserId; // ✅ GUID string
+    private string? currentUserId;
 
     private string search = "";
     private string typeFilter = "";
@@ -177,9 +177,10 @@
                 return;
             }
 
-            isAdmin = user.IsInRole("Administrator");
+            // ✅ IMPORTANT: role name must match what you seeded.
+            // If your role is "Admin", keep it as "Admin".
+            isAdmin = user.IsInRole("Admin") || user.IsInRole("Administrator");
 
-            // ✅ GUID from Identity
             currentUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
 
             db = await DbFactory.CreateDbContextAsync();
@@ -190,19 +191,12 @@
 
             if (isAdmin)
             {
-                // ✅ Admin sees:
-                // 1) Standard foods (IsCustom == 0)
-                // 2) Foods NOT created by a user (CreatedByUserId is null/empty)
-                // This hides user-created custom foods.
-                AllAllowed = all
-                    .Where(f =>
-                        f.IsCustom == 0 ||
-                        (f.IsCustom == 1 && string.IsNullOrWhiteSpace(f.CreatedByUserId)))
-                    .ToList();
+                // ✅ Admin sees everything (standard + all users' custom)
+                AllAllowed = all;
             }
             else
             {
-                // Normal user sees standard + their own custom
+                // ✅ Normal user sees: standard + their own custom
                 AllAllowed = all
                     .Where(f =>
                         f.IsCustom == 0 ||
@@ -211,7 +205,6 @@
                          && f.CreatedByUserId == currentUserId))
                     .ToList();
             }
-
 
             ApplyFilters();
             isLoading = false;

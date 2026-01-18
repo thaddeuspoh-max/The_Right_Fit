@@ -108,7 +108,7 @@
 
             // ✅ FIX: default to dashboard (and ignore "/" landing page)
             var target = string.IsNullOrWhiteSpace(ReturnUrl) || ReturnUrl == "/"
-                ? "/dashboard"
+                ? "/"
                 : ReturnUrl;
 
             RedirectManager.RedirectTo(target);
