@@ -4,8 +4,8 @@
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-@using The_Right_Fit.Data
 @using The_Right_Fit.Domain
+@using The_Right_Fit.Data
 
 @inject The_Right_FitContext Db
 @inject AuthenticationStateProvider AuthStateProvider
@@ -14,53 +14,28 @@
 <PageTitle>Create Diet Log</PageTitle>
 
 <div class="wp">
-
-    <!-- HEADER -->
     <div class="wp-head">
         <div>
             <h1 class="wp-title">Create Diet Log</h1>
-            <div class="wp-sub">Select a food item and servings. Calories auto-calculate.</div>
+            <div class="wp-sub">Log your meal and calories.</div>
         </div>
 
-        <NavLink class="wp-newbtn wp-btn-secondary-black" href="/dietlogs">
-            Back
-        </NavLink>
+        <NavLink class="wp-linkbtn" href="/dietlogs">Back</NavLink>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(error))
     {
-        <div class="wp-empty">
-            <div class="wp-empty-title">Cannot create log</div>
+        <div class="wp-empty" style="margin-bottom:12px;">
+            <div class="wp-empty-title">Cannot save</div>
             <div class="wp-empty-sub">@error</div>
         </div>
     }
 
-    <EditForm Model="form" OnValidSubmit="Save" class="wp-card" style="padding:18px;">
+    <EditForm Model="form" OnValidSubmit="Save">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-        <div style="display:grid; gap:14px;">
-
-            <!-- Log date + meal -->
-            <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px;">
-                <div>
-                    <div class="wp-label">Log Date</div>
-                    <InputDate class="wp-input" @bind-Value="form.LogDate" />
-                    <ValidationMessage For="@(() => form.LogDate)" />
-                </div>
-
-                <div>
-                    <div class="wp-label">Meal Type</div>
-                    <InputSelect class="wp-select" @bind-Value="form.MealType">
-                        <option value="">Select…</option>
-                        <option value="Breakfast">Breakfast</option>
-                        <option value="Lunch">Lunch</option>
-                        <option value="Dinner">Dinner</option>
-                        <option value="Snack">Snack</option>
-                    </InputSelect>
-                    <ValidationMessage For="@(() => form.MealType)" />
-                </div>
-            </div>
+        <div class="wp-card" style="padding:18px;">
 
             <!-- Food selection -->
             <div>
@@ -86,8 +61,21 @@
                 <ValidationMessage For="@(() => form.FoodItemId)" />
             </div>
 
+            <!-- Meal Type -->
+            <div style="margin-top:14px;">
+                <div class="wp-label">Meal Type</div>
+                <InputSelect class="wp-select" @bind-Value="form.MealType">
+                    <option value="">Select…</option>
+                    <option value="Breakfast">Breakfast</option>
+                    <option value="Lunch">Lunch</option>
+                    <option value="Dinner">Dinner</option>
+                    <option value="Snack">Snack</option>
+                </InputSelect>
+                <ValidationMessage For="@(() => form.MealType)" />
+            </div>
+
             <!-- Servings + total calories -->
-            <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px;">
+            <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:14px; margin-top:14px;">
                 <div>
                     <div class="wp-label">Servings</div>
                     <InputNumber class="wp-input"
@@ -98,21 +86,19 @@
 
                 <div>
                     <div class="wp-label">Total Calories (kcal)</div>
-                    <!-- better to show read-only as plain input so Blazor doesn't fight binding -->
                     <input class="wp-input" value="@form.TotalCalories" readonly />
                     <div class="wp-sub" style="margin-top:6px;">Auto: calories per serving × servings</div>
                 </div>
             </div>
 
             <!-- Actions -->
-            <div style="display:flex; gap:10px; flex-wrap:wrap; padding-top:4px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; padding-top:14px;">
                 <button type="submit" class="wp-newbtn">Create Log</button>
                 <NavLink class="wp-linkbtn" href="/dietlogs">Cancel</NavLink>
             </div>
 
         </div>
     </EditForm>
-
 </div>
 
 @code {
@@ -120,12 +106,11 @@
 
     private DietLog form = new()
     {
+        // keep a default, but we will overwrite on save with DateTime.Now
         LogDate = DateTime.Today,
         MealType = "",
         QuantityServings = 1,
         TotalCalories = 0,
-        // OwnerIdentityUserId will be set on save
-        // UserId will be set on save (kept for now)
     };
 
     private List<FoodItems> foodItems = new();
@@ -139,7 +124,6 @@
     {
         error = null;
 
-        // Must be logged in
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         if (auth.User.Identity?.IsAuthenticated != true)
         {
@@ -147,7 +131,6 @@
             return;
         }
 
-        // Load foods
         foodItems = await Db.FoodItems
             .AsNoTracking()
             .Where(x => x.IsCustom == 0)
@@ -157,10 +140,7 @@
         RecalcCalories();
     }
 
-    private void OnFoodChanged()
-    {
-        RecalcCalories();
-    }
+    private void OnFoodChanged() => RecalcCalories();
 
     private void RecalcCalories()
     {
@@ -169,7 +149,7 @@
         var servings = form.QuantityServings;
         if (servings < 0) servings = 0;
 
-        var cps = food?.Calories ?? 0; // Calories per serving
+        var cps = food?.Calories ?? 0;
         form.TotalCalories = (int)Math.Round(cps * servings, MidpointRounding.AwayFromZero);
     }
 
@@ -177,17 +157,14 @@
     {
         error = null;
 
-        // Must select a food item (since you said don't add custom foodname)
         if (!form.FoodItemId.HasValue)
         {
             error = "Please select a food item.";
             return;
         }
 
-        // Ensure calories correct
         RecalcCalories();
 
-        // Get logged-in Identity user id
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = auth.User;
 
@@ -204,12 +181,13 @@
             return;
         }
 
-        // ✅ THIS is what stops cross-user leakage
+        // ✅ critical: link to current user
         form.OwnerIdentityUserId = uid;
 
-        // ✅ If you still have int UserId in your entity, you MUST set something.
-        // Best fix: remove UserId from DietLog/WorkoutLog and only use OwnerIdentityUserId.
-        // For now: keep placeholder so insert doesn't fail.
+        // ✅ FIX 1: give LogDate a real timestamp so ordering/recent works
+        form.LogDate = DateTime.Now;
+
+        // temp workaround if you still have int UserId in entity
         if (form.UserId == 0)
             form.UserId = 1;
 

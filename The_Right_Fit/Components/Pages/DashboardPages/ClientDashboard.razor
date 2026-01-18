@@ -1,8 +1,10 @@
 ﻿@page "/dashboard"
 @rendermode InteractiveServer
+@implements IDisposable
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
 @using Microsoft.AspNetCore.WebUtilities
@@ -117,7 +119,7 @@
                 </div>
             </div>
 
-            <!-- Progress (week only) -->
+            <!-- Progress (week only, no toggle button) -->
             <div class="dash-card">
                 <div class="dash-card-head">
                     <div class="dash-h2">Progress</div>
@@ -144,7 +146,7 @@
                 </div>
             </div>
 
-            <!-- Recent Activity -->
+            <!-- Recent Activity (no View All button) -->
             <div class="dash-card dash-span-2">
                 <div class="dash-card-head">
                     <div class="dash-h2">Recent Activity</div>
@@ -229,7 +231,24 @@
     );
 
     protected override async Task OnInitializedAsync()
-        => await Load();
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        await Load();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var path = Nav.ToAbsoluteUri(e.Location).AbsolutePath;
+        if (path.Equals("/dashboard", StringComparison.OrdinalIgnoreCase))
+        {
+            _ = InvokeAsync(async () => await Load());
+        }
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
 
     private async Task Reload()
         => await Load();
@@ -259,25 +278,21 @@
 
             using var db = DbFactory.CreateDbContext();
 
-            // 1) read planId from URL (if they just clicked Start Plan)
+            // read planId from URL
             int? planIdFromUrl = null;
             var uri = Nav.ToAbsoluteUri(Nav.Uri);
             var query = QueryHelpers.ParseQuery(uri.Query);
             if (query.TryGetValue("planId", out var pidRaw) && int.TryParse(pidRaw.ToString(), out var pid))
                 planIdFromUrl = pid;
 
-            // 2) if URL has planId, save it as active (replaces previous)
             if (planIdFromUrl is not null)
             {
                 await SaveActivePlan(db, planIdFromUrl.Value);
                 selectedPlanId = planIdFromUrl.Value;
-
-                // clean URL
                 Nav.NavigateTo("/dashboard", replace: true);
             }
             else
             {
-                // 3) otherwise always load active plan from DB
                 selectedPlanId = await LoadActivePlan(db);
             }
 
@@ -297,11 +312,13 @@
             workoutsThisWeek = workoutLogs.Count(x =>
                 x.WorkoutDateTime >= weekStart && x.WorkoutDateTime < weekEnd);
 
+            // ✅ FIX 2: deterministic ordering (LogDate ties solved by Id)
             var dietLogs = await db.DietLog
                 .AsNoTracking()
                 .Where(x => x.OwnerIdentityUserId == identityUserId)
                 .Where(x => x.LogDate >= last30)
                 .OrderByDescending(x => x.LogDate)
+                .ThenByDescending(x => x.Id)
                 .ToListAsync();
 
             todayCalories = dietLogs
@@ -326,7 +343,6 @@
 
             ComputeProgressWeek(workoutLogs);
 
-            // ✅ always show ACTIVE plan + only TODAY exercises
             await BuildTodayPlanFromActivePlan(db, today);
 
             BuildRecentActivity(workoutLogs, dietLogs);
@@ -418,7 +434,7 @@
 
         todayPlanTitle = string.IsNullOrWhiteSpace(plan.PlanName) ? "Active Plan" : plan.PlanName;
 
-        var todayDay = ToMonSunNumber(today.DayOfWeek); // 1–7 (Mon–Sun)
+        var todayDay = ToMonSunNumber(today.DayOfWeek);
 
         var planEx = await db.WorkoutPlanExercise
             .AsNoTracking()
