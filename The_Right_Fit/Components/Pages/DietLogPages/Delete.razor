@@ -1,10 +1,13 @@
 ﻿@page "/dietlogs/delete/{Id:int}"
 @rendermode InteractiveServer
 
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
 
 @inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
 
 <PageTitle>Delete Diet Log</PageTitle>
@@ -13,7 +16,7 @@
     <div class="wp-head">
         <div>
             <h1 class="wp-title">Delete Diet Log</h1>
-            <div class="wp-sub">This action cannot be undone.</div>
+            <div class="wp-sub">Confirm deletion of this diet log entry.</div>
         </div>
 
         <NavLink class="wp-linkbtn" href="/dietlogs">Back</NavLink>
@@ -32,45 +35,43 @@
     }
     else if (log is null)
     {
-        <div class="wp-loading">Diet log not found.</div>
+        <div class="wp-empty">
+            <div class="wp-empty-title">Not found</div>
+            <div class="wp-empty-sub">Diet log not found.</div>
+        </div>
     }
     else
     {
-        <div class="wp-card del-card">
+        <div class="wp-card" style="padding:18px;">
 
-            <div class="del-top">
-                <div class="del-title">Diet Log</div>
-                <div class="del-meta">
-                    <span class="del-pill">@(!string.IsNullOrWhiteSpace(log.MealType) ? log.MealType : "Meal")</span>
-                    <span class="del-date">@log.LogDate.ToString("ddd, dd MMM yyyy")</span>
+            <div class="wp-name">Diet Log</div>
+
+            <div class="wp-desc">
+                <div><span class="wp-label">Date:</span> @log.LogDate.ToString("ddd, dd MMM yyyy")</div>
+                <div><span class="wp-label">Meal:</span> @(!string.IsNullOrWhiteSpace(log.MealType) ? log.MealType : "Meal")</div>
+                <div><span class="wp-label">Food:</span> @foodName</div>
+            </div>
+
+            <div class="wl-del-summary wl-del-summary-2">
+                <div class="wl-del-item">
+                    <div class="wl-del-label">Servings</div>
+                    <div class="wl-del-value">@log.QuantityServings</div>
+                </div>
+
+                <div class="wl-del-item">
+                    <div class="wl-del-label">Total Calories</div>
+                    <div class="wl-del-value">@log.TotalCalories.ToString("N0") kcal</div>
                 </div>
             </div>
 
-            <div class="del-summary">
-                <div class="del-item">
-                    <div class="del-label">Food</div>
-                    <div class="del-value">@foodName</div>
-                </div>
-
-                <div class="del-item">
-                    <div class="del-label">Servings</div>
-                    <div class="del-value">@log.QuantityServings</div>
-                </div>
-
-                <div class="del-item">
-                    <div class="del-label">Total Calories</div>
-                    <div class="del-value">@log.TotalCalories.ToString("N0") kcal</div>
-                </div>
-            </div>
-
-            <div class="wp-dangerbox del-danger">
+            <div class="wp-dangerbox" style="margin-top:14px;">
                 <div class="wp-danger-title">Warning</div>
                 <div class="wp-danger-sub">
                     Deleting this diet log will permanently remove it.
                 </div>
             </div>
 
-            <div class="del-actions">
+            <div class="wp-actions">
                 <button class="wp-newbtn wp-btn-danger"
                         disabled="@isDeleting"
                         @onclick="ConfirmDelete">
@@ -84,6 +85,7 @@
                     Cancel
                 </button>
             </div>
+
         </div>
     }
 </div>
@@ -98,6 +100,9 @@
     private DietLog? log;
     private string foodName = "—";
 
+    private string? identityUserId;
+    private bool isAdmin;
+
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
@@ -105,6 +110,19 @@
 
         try
         {
+            // auth (same pattern as your Details page)
+            var auth = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = auth.User;
+
+            if (user.Identity?.IsAuthenticated != true)
+            {
+                Nav.NavigateTo("/Account/Login", true);
+                return;
+            }
+
+            identityUserId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            isAdmin = user.IsInRole("Administrator");
+
             using var db = DbFactory.CreateDbContext();
 
             log = await db.DietLog
@@ -117,6 +135,15 @@
                 return;
             }
 
+            // ✅ ownership check (admin can delete all; users can delete own)
+            if (!isAdmin && !string.Equals(log.OwnerIdentityUserId, identityUserId, StringComparison.Ordinal))
+            {
+                error = "You don't have access to delete this diet log.";
+                log = null;
+                return;
+            }
+
+            // load food name
             if (log.FoodItemId.HasValue)
             {
                 var food = await db.FoodItems
@@ -156,6 +183,13 @@
             if (tracked is null)
             {
                 error = "Diet log not found.";
+                return;
+            }
+
+            // ✅ re-check access before delete (extra safety)
+            if (!isAdmin && !string.Equals(tracked.OwnerIdentityUserId, identityUserId, StringComparison.Ordinal))
+            {
+                error = "You don't have access to delete this diet log.";
                 return;
             }
 

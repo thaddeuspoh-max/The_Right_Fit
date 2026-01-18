@@ -56,7 +56,7 @@ namespace The_Right_Fit.Configurations.Entities
                     Id = 4,
                     UserId = null,
                     
-                    PlanName = "Upper / Lower Split",
+                    PlanName = "Upper / Lower Split Program",
                     GoalType = "Strength Training",
                     DifficultyLevel = "Intermediate",
                     DurationWeeks = 6,
