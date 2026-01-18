@@ -62,7 +62,6 @@
         </div>
     </div>
 
-    <!-- CONTENT -->
     @if (loading)
     {
         <div class="wp-loading">Loading workout plans…</div>
@@ -82,9 +81,10 @@
                 var isSystemPlan = string.IsNullOrWhiteSpace(p.OwnerIdentityUserId);
                 var isMyPlan = !isSystemPlan && (p.OwnerIdentityUserId == identityUserId);
 
-                // ✅ Admin can manage ONLY system plans
-                // ✅ Users can manage ONLY their own plans
                 var canManage = (isAdmin && isSystemPlan) || (!isAdmin && isMyPlan);
+
+                var isActive = (activePlanId.HasValue && activePlanId.Value == p.Id);
+                var hasOtherActive = (activePlanId.HasValue && activePlanId.Value != p.Id);
 
                 <div class="wp-card">
 
@@ -106,15 +106,40 @@
 
                     <div class="wp-cardbottom">
 
-                        <!-- Everyone can view/start -->
-                        <NavLink class="wp-newbtn" href="@($"/workoutplans/details/{p.Id}")">
-                            View / Start Plan
-                        </NavLink>
+                        <div class="wp-actions">
+                            <NavLink class="wp-linkbtn" href="@($"/workoutplans/details/{p.Id}")">
+                                View
+                            </NavLink>
 
-                        <!-- Edit/Delete rules -->
+                            @if (isActive)
+                            {
+                                <button type="button"
+                                        class="wp-newbtn"
+                                        @onclick="StopActivePlan"
+                                        disabled="@busy">
+                                    @(busy ? "Stopping..." : "Stop Plan")
+                                </button>
+                            }
+                            else if (hasOtherActive)
+                            {
+                                <button type="button"
+                                        class="wp-newbtn"
+                                        disabled
+                                        title="Stop your active plan first">
+                                    Stop plan before starting another
+                                </button>
+                            }
+                            else
+                            {
+                                <NavLink class="wp-newbtn" href="@($"/dashboard?planId={p.Id}")">
+                                    Start Plan
+                                </NavLink>
+                            }
+                        </div>
+
                         @if (canManage)
                         {
-                            <div class="wp-actions">
+                            <div class="wp-actions" style="margin-top:10px;">
                                 <NavLink class="wp-linkbtn" href="@($"/workoutplans/edit/{p.Id}")">
                                     Edit
                                 </NavLink>
@@ -137,6 +162,7 @@
 
 @code {
     private bool loading = true;
+    private bool busy = false;
 
     private List<WorkoutPlan> allPlans = new();
 
@@ -144,9 +170,11 @@
     private string? weeks = "";
     private string search = "";
 
-    // Auth
     private string? identityUserId;
     private bool isAdmin;
+
+    // active plan (to block duplicates)
+    private int? activePlanId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -168,7 +196,44 @@
             .OrderByDescending(x => x.Id)
             .ToListAsync();
 
+        await ReloadActivePlan();
+
         loading = false;
+    }
+
+    private async Task ReloadActivePlan()
+    {
+        activePlanId = await Db.UserActivePlan
+            .AsNoTracking()
+            .Where(x => x.OwnerIdentityUserId == identityUserId)
+            .Select(x => (int?)x.WorkoutPlanId)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task StopActivePlan()
+    {
+        if (busy) return;
+        if (string.IsNullOrWhiteSpace(identityUserId)) return;
+
+        busy = true;
+
+        try
+        {
+            var row = await Db.UserActivePlan
+                .FirstOrDefaultAsync(x => x.OwnerIdentityUserId == identityUserId);
+
+            if (row is not null)
+            {
+                Db.UserActivePlan.Remove(row);
+                await Db.SaveChangesAsync();
+            }
+
+            await ReloadActivePlan();
+        }
+        finally
+        {
+            busy = false;
+        }
     }
 
     private List<WorkoutPlan> FilteredPlans
@@ -177,14 +242,12 @@
         {
             IEnumerable<WorkoutPlan> q = allPlans;
 
-            // ✅ Admin sees ONLY system/library plans
             if (isAdmin)
             {
                 q = q.Where(x => string.IsNullOrWhiteSpace(x.OwnerIdentityUserId));
             }
             else
             {
-                // ✅ Users see system plans + their own plans (NOT other people's)
                 q = q.Where(x =>
                     string.IsNullOrWhiteSpace(x.OwnerIdentityUserId) ||
                     x.OwnerIdentityUserId == identityUserId

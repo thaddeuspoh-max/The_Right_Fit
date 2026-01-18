@@ -5,6 +5,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using The_Right_Fit.Domain
+@using Microsoft.AspNetCore.WebUtilities
 
 @inject IDbContextFactory<The_Right_Fit.Data.The_Right_FitContext> DbFactory
 @inject AuthenticationStateProvider AuthStateProvider
@@ -89,8 +90,8 @@
                 {
                     <div class="dash-plan">
                         <div class="dash-plan-item">
-                            <div class="dash-plan-title">No plan assigned</div>
-                            <div class="dash-plan-meta">Pick a plan or log a freestyle workout.</div>
+                            <div class="dash-plan-title">No plan started</div>
+                            <div class="dash-plan-meta">Go to Workout Plans and start one to see today’s exercises.</div>
                         </div>
                     </div>
                 }
@@ -116,16 +117,10 @@
                 </div>
             </div>
 
-            <!-- Progress -->
+            <!-- Progress (week only) -->
             <div class="dash-card">
                 <div class="dash-card-head">
                     <div class="dash-h2">Progress</div>
-
-                    <button type="button"
-                            class="dash-btn"
-                            @onclick="ToggleProgressMode">
-                        @progressModeLabel
-                    </button>
                 </div>
 
                 <div class="dash-progress-block">
@@ -153,12 +148,6 @@
             <div class="dash-card dash-span-2">
                 <div class="dash-card-head">
                     <div class="dash-h2">Recent Activity</div>
-
-                    <NavLink class="dash-btn-link" href="/activity">
-                        <button type="button" class="dash-btn">
-                            View All
-                        </button>
-                    </NavLink>
                 </div>
 
                 @if (recent.Count == 0)
@@ -205,21 +194,15 @@
     // Stats
     private int streakDays;
     private string streakNote = "Keep it going";
-
     private int workoutsThisWeek;
 
     // Calories (today)
     private int calorieGoal = 2100;
     private int todayCalories;
-
     private string todayCaloriesText = "—";
     private string todayCaloriesNote = "";
 
-    // Progress toggle
-    private enum ProgressMode { Week, Month }
-    private ProgressMode progressMode = ProgressMode.Week;
-    private string progressModeLabel => progressMode == ProgressMode.Week ? "This Week" : "This Month";
-
+    // Progress (week only)
     private int progressWorkoutsDone;
     private int progressWorkoutsGoal = 5;
     private int progressWorkoutsPct;
@@ -228,6 +211,7 @@
     private int caloriePct => Percent(todayCaloriesForBar, calorieGoal);
 
     // Today plan
+    private int? selectedPlanId;
     private string todayPlanTitle = "Today";
     private List<PlanItem> todayPlanItems = new();
 
@@ -275,6 +259,28 @@
 
             using var db = DbFactory.CreateDbContext();
 
+            // 1) read planId from URL (if they just clicked Start Plan)
+            int? planIdFromUrl = null;
+            var uri = Nav.ToAbsoluteUri(Nav.Uri);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            if (query.TryGetValue("planId", out var pidRaw) && int.TryParse(pidRaw.ToString(), out var pid))
+                planIdFromUrl = pid;
+
+            // 2) if URL has planId, save it as active (replaces previous)
+            if (planIdFromUrl is not null)
+            {
+                await SaveActivePlan(db, planIdFromUrl.Value);
+                selectedPlanId = planIdFromUrl.Value;
+
+                // clean URL
+                Nav.NavigateTo("/dashboard", replace: true);
+            }
+            else
+            {
+                // 3) otherwise always load active plan from DB
+                selectedPlanId = await LoadActivePlan(db);
+            }
+
             var today = DateTime.Today;
             var last30 = today.AddDays(-30);
 
@@ -306,12 +312,8 @@
             todayCaloriesNote = todayCalories > 0 ? $"Target: {calorieGoal:N0}" : "No meals logged";
 
             var activeDates = new HashSet<DateTime>();
-
-            foreach (var w in workoutLogs)
-                activeDates.Add(w.WorkoutDateTime.Date);
-
-            foreach (var d in dietLogs)
-                activeDates.Add(d.LogDate.Date);
+            foreach (var w in workoutLogs) activeDates.Add(w.WorkoutDateTime.Date);
+            foreach (var d in dietLogs) activeDates.Add(d.LogDate.Date);
 
             streakDays = 0;
             for (var d = today; ; d = d.AddDays(-1))
@@ -322,10 +324,11 @@
 
             streakNote = streakDays >= 7 ? "Nice streak 🔥" : "Keep it going";
 
-            ComputeProgress(workoutLogs);
-            await BuildTodayPlan(db, workoutLogs);
+            ComputeProgressWeek(workoutLogs);
 
-            // ✅ now typed correctly
+            // ✅ always show ACTIVE plan + only TODAY exercises
+            await BuildTodayPlanFromActivePlan(db, today);
+
             BuildRecentActivity(workoutLogs, dietLogs);
         }
         catch (Exception ex)
@@ -338,71 +341,112 @@
         }
     }
 
-    private void ToggleProgressMode()
+    private static int ToMonSunNumber(DayOfWeek d)
+        => d == DayOfWeek.Sunday ? 7 : (int)d;
+
+    private async Task SaveActivePlan(The_Right_Fit.Data.The_Right_FitContext db, int planId)
     {
-        progressMode = progressMode == ProgressMode.Week ? ProgressMode.Month : ProgressMode.Week;
-        _ = Load();
-    }
+        var ok = await db.WorkoutPlan
+            .AsNoTracking()
+            .AnyAsync(x =>
+                x.Id == planId &&
+                (string.IsNullOrWhiteSpace(x.OwnerIdentityUserId) || x.OwnerIdentityUserId == identityUserId));
 
-    private void ComputeProgress(List<WorkoutLog> workoutLogs)
-    {
-        var today = DateTime.Today;
+        if (!ok) return;
 
-        DateTime start;
-        DateTime end;
+        var row = await db.UserActivePlan.FirstOrDefaultAsync(x => x.OwnerIdentityUserId == identityUserId);
 
-        if (progressMode == ProgressMode.Week)
+        if (row is null)
         {
-            start = StartOfWeek(today, DayOfWeek.Monday);
-            end = start.AddDays(7);
-            progressWorkoutsGoal = 5;
+            db.UserActivePlan.Add(new UserActivePlan
+            {
+                OwnerIdentityUserId = identityUserId!,
+                WorkoutPlanId = planId,
+                DateUpdated = DateTime.Now
+            });
         }
         else
         {
-            start = new DateTime(today.Year, today.Month, 1);
-            end = start.AddMonths(1);
-            progressWorkoutsGoal = 20;
+            row.WorkoutPlanId = planId;
+            row.DateUpdated = DateTime.Now;
         }
 
+        await db.SaveChangesAsync();
+    }
+
+    private async Task<int?> LoadActivePlan(The_Right_Fit.Data.The_Right_FitContext db)
+    {
+        var row = await db.UserActivePlan
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.OwnerIdentityUserId == identityUserId);
+
+        return row?.WorkoutPlanId;
+    }
+
+    private void ComputeProgressWeek(List<WorkoutLog> workoutLogs)
+    {
+        var today = DateTime.Today;
+        var start = StartOfWeek(today, DayOfWeek.Monday);
+        var end = start.AddDays(7);
+
+        progressWorkoutsGoal = 5;
         progressWorkoutsDone = workoutLogs.Count(x => x.WorkoutDateTime >= start && x.WorkoutDateTime < end);
         progressWorkoutsPct = Percent(progressWorkoutsDone, progressWorkoutsGoal);
     }
 
-    private async Task BuildTodayPlan(The_Right_Fit.Data.The_Right_FitContext db, List<WorkoutLog> workoutLogs)
+    private async Task BuildTodayPlanFromActivePlan(The_Right_Fit.Data.The_Right_FitContext db, DateTime today)
     {
         todayPlanItems.Clear();
 
-        var latest = workoutLogs.FirstOrDefault();
-        if (latest is null)
+        if (selectedPlanId is null)
         {
             todayPlanTitle = "Today";
             return;
         }
 
-        todayPlanTitle = latest.WorkoutPlanId is null ? "Freestyle" : $"Plan #{latest.WorkoutPlanId}";
-
-        var ex = await db.WorkoutLogExercise
+        var plan = await db.WorkoutPlan
             .AsNoTracking()
-            .Where(x => x.WorkoutLogId == latest.Id)
+            .FirstOrDefaultAsync(x =>
+                x.Id == selectedPlanId.Value &&
+                (string.IsNullOrWhiteSpace(x.OwnerIdentityUserId) || x.OwnerIdentityUserId == identityUserId));
+
+        if (plan is null)
+        {
+            todayPlanTitle = "Today";
+            return;
+        }
+
+        todayPlanTitle = string.IsNullOrWhiteSpace(plan.PlanName) ? "Active Plan" : plan.PlanName;
+
+        var todayDay = ToMonSunNumber(today.DayOfWeek); // 1–7 (Mon–Sun)
+
+        var planEx = await db.WorkoutPlanExercise
+            .AsNoTracking()
+            .Where(x => x.WorkoutPlanId == plan.Id)
+            .Where(x => x.DayOfWeek == todayDay)
+            .OrderBy(x => x.Id)
             .ToListAsync();
 
-        if (ex.Count == 0)
+        if (planEx.Count == 0)
+        {
+            todayPlanItems.Add(new PlanItem("Rest day / No exercises scheduled", $"Day {todayDay}"));
             return;
+        }
 
-        var ids = ex.Select(x => x.ExerciseId).Distinct().ToList();
+        var ids = planEx.Select(x => x.ExerciseId).Distinct().ToList();
+
         var nameMap = await db.Exercise
             .AsNoTracking()
             .Where(x => ids.Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, x => x.ExerciseName);
 
-        foreach (var row in ex.Take(3))
+        foreach (var row in planEx)
         {
             var name = nameMap.TryGetValue(row.ExerciseId, out var n) ? n : $"Exercise #{row.ExerciseId}";
-            todayPlanItems.Add(new PlanItem(name, $"{row.ActualSets} sets • {row.ActualReps} reps"));
+            todayPlanItems.Add(new PlanItem(name, $"{row.Sets} sets • {row.Reps} reps"));
         }
     }
 
-    // ✅ FIXED: strongly typed DietLog list
     private void BuildRecentActivity(List<WorkoutLog> workoutLogs, List<DietLog> dietLogs)
     {
         recent.Clear();
