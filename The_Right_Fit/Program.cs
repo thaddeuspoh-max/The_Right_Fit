@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContextFactory<The_Right_Fit.Data.The_Right_FitContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("The_Right_FitContext") ?? throw new InvalidOperationException("Connection string 'The_Right_FitContext' not found.")));
 
+builder.Services.AddControllers();
+
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -42,6 +44,8 @@ builder.Services.AddIdentityCore<The_Right_FitUser>(options => options.SignIn.Re
 builder.Services.AddSingleton<IEmailSender<The_Right_FitUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
+
+app.MapDefaultControllerRoute();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
